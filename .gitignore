@@ -9,4 +9,4 @@ obj/
 
 # Build files
 *.cache
-*.pdb
+*.pdbg
