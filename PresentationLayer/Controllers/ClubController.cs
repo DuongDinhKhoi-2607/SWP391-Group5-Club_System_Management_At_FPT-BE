@@ -1,8 +1,6 @@
-using BussinessLayer.DTOs;
+﻿using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 
 namespace PresentationLayer.Controllers
 {
@@ -17,41 +15,32 @@ namespace PresentationLayer.Controllers
             _service = service;
         }
 
-        /// <summary>
-        /// [Admin - Phòng IC] Tạo CLB mới và gán Manager từ danh sách sinh viên.
-        /// 
-        /// Luồng xử lý:
-        ///   1. Kiểm tra MSSV trong bảng student
-        ///   2. Nếu chưa có tài khoản → tự động tạo User (systemRole = Manager)
-        ///   3. Tạo Club → Membership → Clubboard → Boardmember (position = Leader)
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> CreateClub([FromBody] CreateClubDto dto)
+        [HttpPut("{clubId}")]
+        public async Task<IActionResult> UpdateClub(
+            long clubId,
+            [FromBody] UpdateClubDto dto)
         {
             try
             {
-                var result = await _service.CreateClubAsync(dto);
+                // Tạm hard-code để test
+                // Sau này đổi thành lấy từ JWT
+                long currentUserId = 2;
+
+                var result = await _service.UpdateClubAsync(
+                    clubId,
+                    dto,
+                    currentUserId
+                );
 
                 return Ok(new
                 {
-                    message = "Tạo CLB thành công.",
-                    data = new
-                    {
-                        result.Clubid,
-                        result.Clubname,
-                        result.Clubcode,
-                        result.Description,
-                        result.Status,
-                        result.Totalactivemembers,
-                        result.Createdat,
-                        manager = new
-                        {
-                            studentId  = dto.ManagerStudentId,
-                            systemRole = "Manager",
-                            position   = "Leader"
-                        }
-                    }
+                    message = "Cập nhật thông tin câu lạc bộ thành công.",
+                    data = result
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {

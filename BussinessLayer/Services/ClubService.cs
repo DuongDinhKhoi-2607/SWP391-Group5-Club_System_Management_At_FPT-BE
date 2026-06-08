@@ -1,9 +1,7 @@
-using BussinessLayer.DTOs;
+﻿using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
-using System;
-using System.Threading.Tasks;
 
 namespace BussinessLayer.Services
 {
@@ -16,39 +14,32 @@ namespace BussinessLayer.Services
             _repo = repo;
         }
 
-        public async Task<Club> CreateClubAsync(CreateClubDto dto)
+        public async Task<Club> UpdateClubAsync(
+            long clubId,
+            UpdateClubDto dto,
+            long currentUserId)
         {
-            // Validate tên CLB không trùng
-            if (await _repo.ClubNameExistsAsync(dto.ClubName))
-                throw new Exception($"Tên CLB '{dto.ClubName}' đã tồn tại.");
+            var club = await _repo.GetByIdAsync(clubId);
 
-            // Validate mã CLB không trùng
-            if (await _repo.ClubCodeExistsAsync(dto.ClubCode))
-                throw new Exception($"Mã CLB '{dto.ClubCode}' đã tồn tại.");
+            if (club == null)
+                throw new Exception("Không tìm thấy câu lạc bộ.");
 
-            // Tìm sinh viên theo MSSV trong bảng student
-            var student = await _repo.GetStudentByIdAsync(dto.ManagerStudentId);
-            if (student == null)
-                throw new Exception($"Không tìm thấy sinh viên với MSSV '{dto.ManagerStudentId}' trong hệ thống.");
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
 
-            // Chỉ cho phép sinh viên đang học làm Manager
-            if (student.Status != "Đang học")
-                throw new Exception($"Sinh viên '{student.Fullname}' (MSSV: {dto.ManagerStudentId}) " +
-                                    $"không đủ điều kiện (trạng thái: {student.Status}).");
+            if (!isLeader)
+                throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được chỉnh sửa thông tin.");
 
-            var club = new Club
-            {
-                Clubname          = dto.ClubName,
-                Clubcode          = dto.ClubCode,
-                Description       = dto.Description,
-                Fanpageurl        = dto.FanpageUrl,
-                Logoimage         = dto.LogoImage,
-                Foundeddate       = dto.FoundedDate,
-                Status            = "Đang hoạt động",
-                Totalactivemembers = 1  // Manager là thành viên đầu tiên
-            };
+            club.Clubname = dto.ClubName;
+            club.Description = dto.Description;
+            club.Logoimage = dto.LogoImage;
+            club.Fanpageurl = dto.FanpageUrl;
 
-            return await _repo.CreateClubWithManagerAsync(club, student);
+            if (dto.FoundedDate.HasValue)
+                club.Foundeddate = DateOnly.FromDateTime(dto.FoundedDate.Value);
+
+            await _repo.UpdateAsync(club);
+
+            return club;
         }
     }
 }

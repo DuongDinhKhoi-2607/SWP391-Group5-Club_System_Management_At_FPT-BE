@@ -1,9 +1,6 @@
-using BussinessLayer.DTOs;
+﻿using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PresentationLayer.Controllers
 {
@@ -18,117 +15,101 @@ namespace PresentationLayer.Controllers
             _service = service;
         }
 
-        /// <summary>
-        /// [Manager] Tạo sự kiện mới — gửi lên Admin chờ duyệt.
-        /// Status tự động = "Chờ duyệt"
-        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateEvent([FromForm] CreateEventDto dto)
         {
             try
             {
-                var result = await _service.CreateEventAsync(dto);
+                long userId = 2;
+
+                var result = await _service.CreateEventAsync(dto, userId);
+
                 return Ok(new
                 {
-                    message = "Tạo sự kiện thành công. Đang chờ Admin duyệt.",
-                    data = new
-                    {
-                        result.Eventid,
-                        result.Eventname,
-                        result.Location,
-                        result.Starttime,
-                        result.Endtime,
-                        result.Status
-                    }
+                    message = "Gửi yêu cầu tạo sự kiện thành công. Vui lòng chờ admin duyệt.",
+                    data = result
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
             }
         }
 
-        /// <summary>
-        /// [Admin] Xem danh sách sự kiện. Filter theo status nếu cần.
-        /// Ví dụ: GET /api/events?status=Chờ duyệt
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetAllEvents([FromQuery] string? status)
+        [HttpGet("{eventId}")]
+        public async Task<IActionResult> GetById(long eventId)
         {
-            var events = await _service.GetAllEventsAsync(status);
-            return Ok(new
-            {
-                total = events.Count,
-                data = events.Select(e => new
-                {
-                    e.Eventid,
-                    e.Eventname,
-                    e.Location,
-                    e.Starttime,
-                    e.Endtime,
-                    e.Status,
-                    club = new { e.Club.Clubid, e.Club.Clubname }
-                })
-            });
+            var result = await _service.GetEventByIdAsync(eventId);
+
+            if (result == null)
+                return NotFound(new { message = "Không tìm thấy sự kiện." });
+
+            return Ok(result);
         }
 
-        /// <summary>
-        /// [Admin] Duyệt sự kiện.
-        /// Tự động kiểm tra:
-        ///   1. Trùng địa điểm + thời gian với sự kiện đã duyệt khác
-        ///   2. Cùng CLB đã có sự kiện khác cùng thời gian
-        /// </summary>
-        [HttpPut("{id}/approve")]
-        public async Task<IActionResult> ApproveEvent(long id)
+        [HttpGet("club/{clubId}")]
+        public async Task<IActionResult> GetByClub(long clubId)
+        {
+            var result = await _service.GetEventsByClubAsync(clubId);
+            return Ok(result);
+        }
+
+        [HttpGet("club/{clubId}/approved")]
+        public async Task<IActionResult> GetApprovedByClub(long clubId)
+        {
+            var result = await _service.GetApprovedEventsByClubAsync(clubId);
+            return Ok(result);
+        }
+
+        [HttpPut("{eventId}")]
+        public async Task<IActionResult> UpdateEvent(
+            long eventId,
+            [FromBody] UpdateEventDto dto)
         {
             try
             {
-                var result = await _service.ApproveEventAsync(id);
+                var result = await _service.UpdateEventAsync(eventId, dto);
+
                 return Ok(new
                 {
-                    message = $"Sự kiện '{result.Eventname}' đã được duyệt thành công.",
-                    data = new
-                    {
-                        result.Eventid,
-                        result.Eventname,
-                        result.Location,
-                        result.Starttime,
-                        result.Endtime,
-                        result.Status
-                    }
+                    message = "Cập nhật sự kiện thành công.",
+                    data = result
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
             }
         }
 
-        /// <summary>
-        /// [Admin] Từ chối sự kiện kèm lý do.
-        /// Body: { "rejectReason": "Lý do từ chối" }
-        /// </summary>
-        [HttpPut("{id}/reject")]
-        public async Task<IActionResult> RejectEvent(long id, [FromBody] RejectEventDto dto)
+        [HttpPut("{eventId}/cancel")]
+        public async Task<IActionResult> CancelEvent(long eventId)
         {
             try
             {
-                var result = await _service.RejectEventAsync(id, dto);
+                await _service.CancelEventAsync(eventId);
+
                 return Ok(new
                 {
-                    message = $"Sự kiện '{result.Eventname}' đã bị từ chối.",
-                    rejectReason = dto.RejectReason,
-                    data = new
-                    {
-                        result.Eventid,
-                        result.Eventname,
-                        result.Status
-                    }
+                    message = "Hủy sự kiện thành công."
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
             }
         }
     }
