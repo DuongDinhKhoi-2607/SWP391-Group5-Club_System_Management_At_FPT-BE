@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -12,6 +12,29 @@ namespace BussinessLayer.Services
         public ClubService(IClubRepository repo)
         {
             _repo = repo;
+        }
+
+        public async Task<Club> CreateClubAsync(CreateClubDto dto)
+        {
+            if (await _repo.ClubNameExistsAsync(dto.ClubName))
+                throw new Exception($"Tên CLB '{dto.ClubName}' đã tồn tại.");
+            if (await _repo.ClubCodeExistsAsync(dto.ClubCode))
+                throw new Exception($"Mã CLB '{dto.ClubCode}' đã tồn tại.");
+
+            var student = await _repo.GetStudentByIdAsync(dto.ManagerStudentId);
+            if (student == null)
+                throw new Exception($"Không tìm thấy sinh viên MSSV '{dto.ManagerStudentId}'.");
+            if (student.Status != "Đang học")
+                throw new Exception($"Sinh viên '{student.Fullname}' không đủ điều kiện (trạng thái: {student.Status}).");
+
+            var club = new Club
+            {
+                Clubname = dto.ClubName, Clubcode = dto.ClubCode,
+                Description = dto.Description, Fanpageurl = dto.FanpageUrl,
+                Logoimage = dto.LogoImage, Foundeddate = dto.FoundedDate,
+                Status = "Đang hoạt động", Totalactivemembers = 1
+            };
+            return await _repo.CreateClubWithManagerAsync(club, student);
         }
 
         public async Task<Club> UpdateClubAsync(

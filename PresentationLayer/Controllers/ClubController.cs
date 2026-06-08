@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +13,27 @@ namespace PresentationLayer.Controllers
         public ClubController(IClubService service)
         {
             _service = service;
+        }
+
+        /// <summary>[Admin] Tạo CLB mới và gán Manager từ bảng student</summary>
+        [HttpPost]
+        public async Task<IActionResult> CreateClub([FromBody] CreateClubDto dto)
+        {
+            try
+            {
+                var result = await _service.CreateClubAsync(dto);
+                return Ok(new
+                {
+                    message = "Tạo CLB thành công.",
+                    data = new
+                    {
+                        result.Clubid, result.Clubname, result.Clubcode,
+                        result.Description, result.Status, result.Totalactivemembers, result.Createdat,
+                        manager = new { studentId = dto.ManagerStudentId, systemRole = "Manager", position = "Leader" }
+                    }
+                });
+            }
+            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
 
         [HttpPut("{clubId}")]
