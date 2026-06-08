@@ -25,7 +25,11 @@ public partial class Document
 
     public DateTime? Updatedat { get; set; }
 
+    public long? Eventid { get; set; }
+
     public virtual Club Club { get; set; } = null!;
 
     public virtual Documenttype Documenttype { get; set; } = null!;
+
+    public virtual Event? Event { get; set; }
 }

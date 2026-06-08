@@ -24,6 +24,4 @@ public partial class Participant
     public virtual Event Event { get; set; } = null!;
 
     public virtual ICollection<Evidence> Evidences { get; set; } = new List<Evidence>();
-
-    public virtual Appuser User { get; set; } = null!;
 }

@@ -24,6 +24,4 @@ public partial class Membership
     public virtual ICollection<Boardmember> Boardmembers { get; set; } = new List<Boardmember>();
 
     public virtual Club Club { get; set; } = null!;
-
-    public virtual Appuser User { get; set; } = null!;
 }

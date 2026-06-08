@@ -15,8 +15,6 @@ public partial class ClubSystemDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Appuser> Appusers { get; set; }
-
     public virtual DbSet<Boardmember> Boardmembers { get; set; }
 
     public virtual DbSet<Club> Clubs { get; set; }
@@ -45,9 +43,7 @@ public partial class ClubSystemDbContext : DbContext
 
     public virtual DbSet<Userinformation> Userinformations { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=aws-1-ap-northeast-2.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.fchhhvcaeoaiqqypdiyc;Password=Team5_SWP391@123;SSL Mode=Require;Trust Server Certificate=true");
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,47 +64,6 @@ public partial class ClubSystemDbContext : DbContext
             .HasPostgresExtension("extensions", "pgcrypto")
             .HasPostgresExtension("extensions", "uuid-ossp")
             .HasPostgresExtension("vault", "supabase_vault");
-
-        modelBuilder.Entity<Appuser>(entity =>
-        {
-            entity.HasKey(e => e.Userid).HasName("appuser_pkey");
-
-            entity.ToTable("appuser");
-
-            entity.HasIndex(e => e.Username, "appuser_username_key").IsUnique();
-
-            entity.HasIndex(e => e.Departmentid, "ix_user_departmentid");
-
-            entity.Property(e => e.Userid).HasColumnName("userid");
-            entity.Property(e => e.Createdat)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("createdat");
-            entity.Property(e => e.Departmentid).HasColumnName("departmentid");
-            entity.Property(e => e.Lastloginat)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("lastloginat");
-            entity.Property(e => e.Passwordhash)
-                .HasMaxLength(500)
-                .HasColumnName("passwordhash");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasDefaultValueSql("'Chờ kích hoạt'::character varying")
-                .HasColumnName("status");
-            entity.Property(e => e.Systemrole)
-                .HasMaxLength(50)
-                .HasColumnName("systemrole");
-            entity.Property(e => e.Updatedat)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("updatedat");
-            entity.Property(e => e.Username)
-                .HasMaxLength(100)
-                .HasColumnName("username");
-
-            entity.HasOne(d => d.Department).WithMany(p => p.Appusers)
-                .HasForeignKey(d => d.Departmentid)
-                .HasConstraintName("fk_user_department");
-        });
 
         modelBuilder.Entity<Boardmember>(entity =>
         {
@@ -309,6 +264,7 @@ public partial class ClubSystemDbContext : DbContext
                 .HasColumnName("documentname");
             entity.Property(e => e.Documenttypeid).HasColumnName("documenttypeid");
             entity.Property(e => e.Downloadcount).HasColumnName("downloadcount");
+            entity.Property(e => e.Eventid).HasColumnName("eventid");
             entity.Property(e => e.Filesize).HasColumnName("filesize");
             entity.Property(e => e.Fileurl)
                 .HasMaxLength(500)
@@ -330,6 +286,10 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Documenttypeid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_document_documenttype");
+
+            entity.HasOne(d => d.Event).WithMany(p => p.Documents)
+                .HasForeignKey(d => d.Eventid)
+                .HasConstraintName("fk_document_event");
         });
 
         modelBuilder.Entity<Documenttype>(entity =>
@@ -457,11 +417,6 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Clubid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_membership_club");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Memberships)
-                .HasForeignKey(d => d.Userid)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_membership_user");
         });
 
         modelBuilder.Entity<Participant>(entity =>
@@ -501,11 +456,6 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Eventid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_participant_event");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Participants)
-                .HasForeignKey(d => d.Userid)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_participant_user");
         });
 
         modelBuilder.Entity<Reportperiod>(entity =>
@@ -610,10 +560,6 @@ public partial class ClubSystemDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("studentid");
             entity.Property(e => e.Userid).HasColumnName("userid");
-
-            entity.HasOne(d => d.User).WithOne(p => p.Userinformation)
-                .HasForeignKey<Userinformation>(d => d.Userid)
-                .HasConstraintName("fk_userinformation_user");
         });
 
         OnModelCreatingPartial(modelBuilder);

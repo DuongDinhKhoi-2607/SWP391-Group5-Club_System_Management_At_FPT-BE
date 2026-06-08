@@ -32,6 +32,4 @@ public partial class Userinformation
     public DateOnly? Graduationdate { get; set; }
 
     public DateTime Infoupdatedat { get; set; }
-
-    public virtual Appuser User { get; set; } = null!;
 }

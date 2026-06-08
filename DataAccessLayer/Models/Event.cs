@@ -29,5 +29,7 @@ public partial class Event
 
     public virtual Club Club { get; set; } = null!;
 
+    public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
+
     public virtual ICollection<Participant> Participants { get; set; } = new List<Participant>();
 }
