@@ -41,6 +41,8 @@ public partial class ClubSystemDbContext : DbContext
 
     public virtual DbSet<Semester> Semesters { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
+
     public virtual DbSet<Userinformation> Userinformations { get; set; }
 
     
@@ -417,6 +419,11 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Clubid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_membership_club");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Memberships)
+                .HasForeignKey(d => d.Userid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_membership_user");
         });
 
         modelBuilder.Entity<Participant>(entity =>
@@ -456,6 +463,11 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Eventid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_participant_event");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Participants)
+                .HasForeignKey(d => d.Userid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_participant_user");
         });
 
         modelBuilder.Entity<Reportperiod>(entity =>
@@ -515,6 +527,49 @@ public partial class ClubSystemDbContext : DbContext
                 .HasColumnName("status");
         });
 
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Userid).HasName("appuser_pkey");
+
+            entity.ToTable("user");
+
+            entity.HasIndex(e => e.Username, "appuser_username_key").IsUnique();
+
+            entity.HasIndex(e => e.Departmentid, "ix_user_departmentid");
+
+            entity.Property(e => e.Userid)
+                .HasDefaultValueSql("nextval('appuser_userid_seq'::regclass)")
+                .HasColumnName("userid");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Departmentid).HasColumnName("departmentid");
+            entity.Property(e => e.Lastloginat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("lastloginat");
+            entity.Property(e => e.Passwordhash)
+                .HasMaxLength(500)
+                .HasColumnName("passwordhash");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("'Chờ kích hoạt'::character varying")
+                .HasColumnName("status");
+            entity.Property(e => e.Systemrole)
+                .HasMaxLength(50)
+                .HasColumnName("systemrole");
+            entity.Property(e => e.Updatedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updatedat");
+            entity.Property(e => e.Username)
+                .HasMaxLength(100)
+                .HasColumnName("username");
+
+            entity.HasOne(d => d.Department).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Departmentid)
+                .HasConstraintName("fk_user_department");
+        });
+
         modelBuilder.Entity<Userinformation>(entity =>
         {
             entity.HasKey(e => e.Userinfoid).HasName("userinformation_pkey");
@@ -560,6 +615,10 @@ public partial class ClubSystemDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("studentid");
             entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.User).WithOne(p => p.Userinformation)
+                .HasForeignKey<Userinformation>(d => d.Userid)
+                .HasConstraintName("fk_userinformation_user");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -14,4 +14,6 @@ public partial class Department
     public string Status { get; set; } = null!;
 
     public DateTime Createdat { get; set; }
+
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }
