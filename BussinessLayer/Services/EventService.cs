@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -55,6 +55,11 @@ namespace BussinessLayer.Services
             };
 
             return await _repo.CreateAsync(newEvent);
+        }
+
+        public async Task<List<Event>> GetAllEventsAsync(string? statusFilter)
+        {
+            return await _repo.GetAllAsync(statusFilter);
         }
 
         public async Task<Event?> GetEventByIdAsync(long eventId)
@@ -143,6 +148,57 @@ namespace BussinessLayer.Services
             ev.Status = "Đã hủy";
 
             await _repo.UpdateAsync(ev);
+        }
+
+        public async Task<Event> ApproveEventAsync(long eventId)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                     ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            if (ev.Status != "Chờ duyệt")
+                throw new Exception($"Sự kiện đang ở trạng thái '{ev.Status}', không thể duyệt.");
+
+            if (string.IsNullOrWhiteSpace(ev.Location))
+                throw new Exception("Sự kiện này chưa có địa điểm tổ chức, không thể duyệt.");
+
+            // ── Kiểm tra 1: Trùng địa điểm + thời gian ──────────────────────
+            var locationConflict = await _repo.GetConflictByLocationAsync(
+                eventId, ev.Location!, ev.Starttime, ev.Endtime);
+
+            if (locationConflict != null)
+                throw new Exception(
+                    $"Không thể duyệt: Địa điểm '{ev.Location}' đã có sự kiện " +
+                    $"'{locationConflict.Eventname}' (CLB: {locationConflict.Club?.Clubname}) " +
+                    $"vào lúc {locationConflict.Starttime:dd/MM/yyyy HH:mm} - {locationConflict.Endtime:HH:mm}.");
+
+            // ── Kiểm tra 2: Cùng CLB trùng thời gian ────────────────────────
+            var clubConflict = await _repo.IsEventTimeConflictAsync(
+                ev.Clubid, ev.Starttime, ev.Endtime, eventId);
+
+            if (clubConflict)
+                throw new Exception(
+                    $"Không thể duyệt: CLB đã có sự kiện khác bị trùng thời gian. " +
+                    $"Một CLB không thể tổ chức 2 sự kiện cùng lúc.");
+
+            ev.Status = "Đã duyệt";
+            await _repo.UpdateAsync(ev);
+            return ev;
+        }
+
+        public async Task<Event> RejectEventAsync(long eventId, RejectEventDto dto)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                     ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            if (ev.Status != "Chờ duyệt")
+                throw new Exception($"Sự kiện đang ở trạng thái '{ev.Status}', không thể từ chối.");
+
+            if (string.IsNullOrWhiteSpace(dto.RejectReason))
+                throw new Exception("Lý do từ chối không được để trống.");
+
+            ev.Status = "Bị từ chối";
+            await _repo.UpdateAsync(ev);
+            return ev;
         }
     }
 }

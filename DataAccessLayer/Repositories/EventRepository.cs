@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Models;
+using DataAccessLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Repositories
@@ -22,7 +22,18 @@ namespace DataAccessLayer.Repositories
         public async Task<Event?> GetByIdAsync(long eventId)
         {
             return await _context.Events
+                .Include(e => e.Club)
                 .FirstOrDefaultAsync(e => e.Eventid == eventId);
+        }
+
+        public async Task<List<Event>> GetAllAsync(string? statusFilter)
+        {
+            var query = _context.Events.Include(e => e.Club).AsQueryable();
+
+            if (!string.IsNullOrEmpty(statusFilter))
+                query = query.Where(e => e.Status == statusFilter);
+
+            return await query.OrderByDescending(e => e.Starttime).ToListAsync();
         }
 
         public async Task<List<Event>> GetByClubIdAsync(long clubId)
@@ -73,6 +84,19 @@ namespace DataAccessLayer.Repositories
                 e.Eventname.ToLower() == eventName.ToLower() &&
                 e.Starttime == startTime &&
                 (!ignoreEventId.HasValue || e.Eventid != ignoreEventId.Value));
+        }
+
+        public async Task<Event?> GetConflictByLocationAsync(long excludeEventId, string location, DateTime startTime, DateTime endTime)
+        {
+            return await _context.Events
+                .Include(e => e.Club)
+                .Where(e =>
+                    e.Eventid != excludeEventId &&
+                    (e.Status == "Đã duyệt" || e.Status == "Đang diễn ra") &&
+                    e.Location == location &&
+                    e.Starttime < endTime &&
+                    e.Endtime > startTime)
+                .FirstOrDefaultAsync();
         }
 
         public async Task UpdateAsync(Event ev)
