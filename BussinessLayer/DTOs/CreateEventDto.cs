@@ -1,28 +1,20 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+using System;
 
 namespace BussinessLayer.DTOs
 {
+    /// <summary>Manager gửi để tạo sự kiện chờ Admin duyệt</summary>
     public class CreateEventDto
     {
-        [Required]
         public long ClubId { get; set; }
-
-        [Required]
         public string EventName { get; set; } = null!;
-
         public string? Description { get; set; }
 
-        public string? Location { get; set; }
+        /// <summary>Địa điểm tổ chức (dùng để kiểm tra trùng khi duyệt)</summary>
+        public string Location { get; set; } = null!;
 
         public string? PlanBudget { get; set; }
-
         public int TargetParticipants { get; set; }
-
-        [Required]
         public DateTime StartTime { get; set; }
-
-        [Required]
         public DateTime EndTime { get; set; }
     }
 }

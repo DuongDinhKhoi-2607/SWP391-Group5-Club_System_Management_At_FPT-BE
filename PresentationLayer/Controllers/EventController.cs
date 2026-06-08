@@ -1,7 +1,8 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PresentationLayer.Controllers
@@ -17,36 +18,117 @@ namespace PresentationLayer.Controllers
             _service = service;
         }
 
+        /// <summary>
+        /// [Manager] Tạo sự kiện mới — gửi lên Admin chờ duyệt.
+        /// Status tự động = "Chờ duyệt"
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
         {
             try
             {
-                // Tạm hard-code UserId để test trước
-                // Sau này có Login/JWT thì đổi lại lấy từ token
-                long userId = 2;
-
-                var result = await _service.CreateEventAsync(dto, userId);
-
+                var result = await _service.CreateEventAsync(dto);
                 return Ok(new
                 {
-                    message = "Tạo sự kiện thành công.",
-                    data = result
-                });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return StatusCode(403, new
-                {
-                    message = ex.Message
+                    message = "Tạo sự kiện thành công. Đang chờ Admin duyệt.",
+                    data = new
+                    {
+                        result.Eventid,
+                        result.Eventname,
+                        result.Location,
+                        result.Starttime,
+                        result.Endtime,
+                        result.Status
+                    }
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [Admin] Xem danh sách sự kiện. Filter theo status nếu cần.
+        /// Ví dụ: GET /api/events?status=Chờ duyệt
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetAllEvents([FromQuery] string? status)
+        {
+            var events = await _service.GetAllEventsAsync(status);
+            return Ok(new
+            {
+                total = events.Count,
+                data = events.Select(e => new
                 {
-                    message = ex.Message
+                    e.Eventid,
+                    e.Eventname,
+                    e.Location,
+                    e.Starttime,
+                    e.Endtime,
+                    e.Status,
+                    club = new { e.Club.Clubid, e.Club.Clubname }
+                })
+            });
+        }
+
+        /// <summary>
+        /// [Admin] Duyệt sự kiện.
+        /// Tự động kiểm tra:
+        ///   1. Trùng địa điểm + thời gian với sự kiện đã duyệt khác
+        ///   2. Cùng CLB đã có sự kiện khác cùng thời gian
+        /// </summary>
+        [HttpPut("{id}/approve")]
+        public async Task<IActionResult> ApproveEvent(long id)
+        {
+            try
+            {
+                var result = await _service.ApproveEventAsync(id);
+                return Ok(new
+                {
+                    message = $"Sự kiện '{result.Eventname}' đã được duyệt thành công.",
+                    data = new
+                    {
+                        result.Eventid,
+                        result.Eventname,
+                        result.Location,
+                        result.Starttime,
+                        result.Endtime,
+                        result.Status
+                    }
                 });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [Admin] Từ chối sự kiện kèm lý do.
+        /// Body: { "rejectReason": "Lý do từ chối" }
+        /// </summary>
+        [HttpPut("{id}/reject")]
+        public async Task<IActionResult> RejectEvent(long id, [FromBody] RejectEventDto dto)
+        {
+            try
+            {
+                var result = await _service.RejectEventAsync(id, dto);
+                return Ok(new
+                {
+                    message = $"Sự kiện '{result.Eventname}' đã bị từ chối.",
+                    rejectReason = dto.RejectReason,
+                    data = new
+                    {
+                        result.Eventid,
+                        result.Eventname,
+                        result.Status
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

@@ -41,11 +41,15 @@ public partial class ClubSystemDbContext : DbContext
 
     public virtual DbSet<Semester> Semesters { get; set; }
 
+    public virtual DbSet<Student> Students { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Userinformation> Userinformations { get; set; }
 
-    
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.fchhhvcaeoaiqqypdiyc;Password=Team5_SWP391@123;SSL Mode=Require;Trust Server Certificate=true");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -527,6 +531,39 @@ public partial class ClubSystemDbContext : DbContext
                 .HasColumnName("status");
         });
 
+        modelBuilder.Entity<Student>(entity =>
+        {
+            entity.HasKey(e => e.Studentid).HasName("student_pkey");
+
+            entity.ToTable("student");
+
+            entity.HasIndex(e => e.Schoolemail, "student_schoolemail_key").IsUnique();
+
+            entity.Property(e => e.Studentid)
+                .HasColumnType("character varying")
+                .HasColumnName("studentid");
+            entity.Property(e => e.Academicbatch)
+                .HasColumnType("character varying")
+                .HasColumnName("academicbatch");
+            entity.Property(e => e.Dateofbirth).HasColumnName("dateofbirth");
+            entity.Property(e => e.Fullname)
+                .HasColumnType("character varying")
+                .HasColumnName("fullname");
+            entity.Property(e => e.Gender)
+                .HasColumnType("character varying")
+                .HasColumnName("gender");
+            entity.Property(e => e.Major)
+                .HasColumnType("character varying")
+                .HasColumnName("major");
+            entity.Property(e => e.Schoolemail)
+                .HasColumnType("character varying")
+                .HasColumnName("schoolemail");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'Đang học'::character varying")
+                .HasColumnType("character varying")
+                .HasColumnName("status");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Userid).HasName("appuser_pkey");
@@ -576,45 +613,32 @@ public partial class ClubSystemDbContext : DbContext
 
             entity.ToTable("userinformation");
 
-            entity.HasIndex(e => e.Schoolemail, "userinformation_schoolemail_key").IsUnique();
-
             entity.HasIndex(e => e.Studentid, "userinformation_studentid_key").IsUnique();
 
             entity.HasIndex(e => e.Userid, "userinformation_userid_key").IsUnique();
 
             entity.Property(e => e.Userinfoid).HasColumnName("userinfoid");
-            entity.Property(e => e.Academicbatch)
-                .HasMaxLength(50)
-                .HasColumnName("academicbatch");
             entity.Property(e => e.Avatar)
                 .HasMaxLength(500)
                 .HasColumnName("avatar");
-            entity.Property(e => e.Dateofbirth).HasColumnName("dateofbirth");
-            entity.Property(e => e.Fullname)
-                .HasMaxLength(200)
-                .HasColumnName("fullname");
-            entity.Property(e => e.Gender)
-                .HasMaxLength(20)
-                .HasColumnName("gender");
             entity.Property(e => e.Graduationdate).HasColumnName("graduationdate");
             entity.Property(e => e.Infoupdatedat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("infoupdatedat");
             entity.Property(e => e.Isalumni).HasColumnName("isalumni");
-            entity.Property(e => e.Major)
-                .HasMaxLength(150)
-                .HasColumnName("major");
             entity.Property(e => e.Phonenumber)
                 .HasMaxLength(30)
                 .HasColumnName("phonenumber");
-            entity.Property(e => e.Schoolemail)
-                .HasMaxLength(255)
-                .HasColumnName("schoolemail");
             entity.Property(e => e.Studentid)
                 .HasMaxLength(50)
                 .HasColumnName("studentid");
             entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.Student).WithOne(p => p.Userinformation)
+                .HasForeignKey<Userinformation>(d => d.Studentid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_userinformation_student");
 
             entity.HasOne(d => d.User).WithOne(p => p.Userinformation)
                 .HasForeignKey<Userinformation>(d => d.Userid)
