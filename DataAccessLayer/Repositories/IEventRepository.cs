@@ -1,11 +1,15 @@
 ﻿using DataAccessLayer.Models;
-using System.Threading.Tasks;
 
 namespace DataAccessLayer.Repositories
 {
     public interface IEventRepository
     {
-        Task<bool> CanCreateEventAsync(long userId, long clubId);
         Task<Event> CreateAsync(Event newEvent);
+        Task<Event?> GetByIdAsync(long eventId);
+        Task<List<Event>> GetByClubIdAsync(long clubId);
+        Task<List<Event>> GetApprovedByClubIdAsync(long clubId);
+        Task<bool> IsEventTimeConflictAsync(long clubId, DateTime startTime, DateTime endTime, long? ignoreEventId = null);
+        Task<bool> ExistsDuplicateEventAsync(long clubId, string eventName, DateTime startTime, long? ignoreEventId = null);
+        Task UpdateAsync(Event ev);
     }
 }

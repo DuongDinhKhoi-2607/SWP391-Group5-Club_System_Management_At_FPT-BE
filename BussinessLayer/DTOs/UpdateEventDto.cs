@@ -1,12 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-
-namespace BussinessLayer.DTOs
+﻿namespace BussinessLayer.DTOs
 {
-    public class CreateEventDto
+    public class UpdateEventDto
     {
-        public long ClubId { get; set; }
         public string EventName { get; set; } = null!;
         public string? Description { get; set; }
         public string? Location { get; set; }
@@ -14,7 +9,5 @@ namespace BussinessLayer.DTOs
         public int TargetParticipants { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
-
-        public List<IFormFile>? Files { get; set; }
     }
 }

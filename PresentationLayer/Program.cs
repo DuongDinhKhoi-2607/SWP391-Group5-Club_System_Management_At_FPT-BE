@@ -17,6 +17,8 @@ builder.Services.AddDbContext<ClubSystemDbContext>(options =>
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IClubRepository, ClubRepository>();
+builder.Services.AddScoped<IClubService, ClubService>();
 
 var app = builder.Build();
 
@@ -26,11 +28,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();
