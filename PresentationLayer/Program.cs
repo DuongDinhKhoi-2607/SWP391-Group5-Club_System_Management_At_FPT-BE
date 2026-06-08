@@ -1,17 +1,33 @@
+using BussinessLayer.Interfaces;
+using BussinessLayer.Services;
+using DataAccessLayer.Models;
+using DataAccessLayer.Repositories;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Add services
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<ClubSystemDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IClubService, ClubService>();
+builder.Services.AddScoped<IClubRepository, ClubRepository>();
+
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Swagger
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

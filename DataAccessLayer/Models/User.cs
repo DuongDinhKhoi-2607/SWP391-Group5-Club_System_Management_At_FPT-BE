@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DataAccessLayer.Models;
 
-public partial class Appuser
+public partial class User
 {
     public long Userid { get; set; }
 

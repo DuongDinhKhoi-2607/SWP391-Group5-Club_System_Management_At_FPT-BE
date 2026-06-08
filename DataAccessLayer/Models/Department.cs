@@ -15,5 +15,5 @@ public partial class Department
 
     public DateTime Createdat { get; set; }
 
-    public virtual ICollection<Appuser> Appusers { get; set; } = new List<Appuser>();
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

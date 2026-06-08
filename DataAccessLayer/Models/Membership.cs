@@ -25,5 +25,5 @@ public partial class Membership
 
     public virtual Club Club { get; set; } = null!;
 
-    public virtual Appuser User { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 }
