@@ -20,8 +20,9 @@ builder.Services.AddScoped<IClubRepository, ClubRepository>();
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
-builder.Services.AddScoped<IClubRepository, ClubRepository>();
-builder.Services.AddScoped<IClubService, ClubService>();
+
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
 var app = builder.Build();
 

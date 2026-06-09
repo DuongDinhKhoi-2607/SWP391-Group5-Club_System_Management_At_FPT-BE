@@ -38,19 +38,19 @@ namespace BussinessLayer.Services
         }
 
         public async Task<Club> UpdateClubAsync(
-            long clubId,
-            UpdateClubDto dto,
-            long currentUserId)
+     long clubId,
+     UpdateClubDto dto,
+     long currentUserId)
         {
             var club = await _repo.GetByIdAsync(clubId);
 
             if (club == null)
                 throw new Exception("Không tìm thấy câu lạc bộ.");
 
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
-
-            if (!isLeader)
-                throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được chỉnh sửa thông tin.");
+            // Tạm thời bỏ kiểm tra Leader
+            // var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
+            // if (!isLeader)
+            //     throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được chỉnh sửa thông tin.");
 
             club.Clubname = dto.ClubName;
             club.Description = dto.Description;
