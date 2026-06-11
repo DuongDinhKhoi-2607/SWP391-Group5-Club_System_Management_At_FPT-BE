@@ -24,6 +24,8 @@ builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 
+builder.Services.AddScoped<IClubMemberListService, ClubMemberListService>();
+builder.Services.AddScoped<IClubMemberListRepository, ClubMemberListRepository>();
 var app = builder.Build();
 
 app.UseSwagger();
