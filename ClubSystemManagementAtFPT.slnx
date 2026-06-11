@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
+    <File Path="Dockerfile" />
   </Folder>
   <Project Path="BussinessLayer/BussinessLayer.csproj" />
   <Project Path="DataAccessLayer/DataAccessLayer.csproj" />
