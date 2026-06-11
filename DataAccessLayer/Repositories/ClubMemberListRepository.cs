@@ -12,18 +12,15 @@ namespace DataAccessLayer.Repositories
             _context = context;
         }
 
-        public async Task<bool> IsLeaderOfClubAsync(long userId, long clubId)
+        public async Task<bool> IsManagerOfClubAsync(long userId, long clubId)
         {
-            return await _context.Boardmembers
-                .Include(bm => bm.Membership)
-                .Include(bm => bm.Board)
-                .AnyAsync(bm =>
-                    bm.Membership.Userid == userId &&
-                    bm.Membership.Clubid == clubId &&
-                    bm.Membership.Status == "Đang sinh hoạt" &&
-                    bm.Board.Clubid == clubId &&
-                    bm.Board.Status == "Đang đương nhiệm" &&
-                    bm.Position == "Leader");
+            return await _context.Memberships
+                .Include(m => m.Boardmembers)
+                .AnyAsync(m =>
+                    m.Userid == userId &&
+                    m.Clubid == clubId &&
+                    m.Status == "Đang sinh hoạt" &&
+                    m.Boardmembers.Any());
         }
 
         public async Task<List<Membership>> GetActiveMembersByClubAsync(long clubId)
@@ -146,6 +143,29 @@ namespace DataAccessLayer.Repositories
             return Convert.ToHexString(
                 sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input))
             ).ToLower();
+        }
+
+        public async Task<Membership?> GetMemberDetailByMembershipIdAsync(long membershipId)
+        {
+            return await _context.Memberships
+                .Include(m => m.User)
+                    .ThenInclude(u => u.Userinformation)
+                        .ThenInclude(ui => ui.Student)
+                .Include(m => m.Boardmembers)
+                    .ThenInclude(bm => bm.Board)
+                .FirstOrDefaultAsync(m => m.Membershipid == membershipId);
+        }
+
+        public async Task<Membership?> GetMembershipByIdAsync(long membershipId)
+        {
+            return await _context.Memberships
+                .FirstOrDefaultAsync(m => m.Membershipid == membershipId);
+        }
+
+        public async Task UpdateMembershipAsync(Membership membership)
+        {
+            _context.Memberships.Update(membership);
+            await _context.SaveChangesAsync();
         }
     }
 }

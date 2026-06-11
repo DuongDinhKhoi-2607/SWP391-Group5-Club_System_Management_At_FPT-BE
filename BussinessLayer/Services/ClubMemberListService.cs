@@ -17,7 +17,7 @@ namespace BussinessLayer.Services
             long clubId,
             long currentUserId)
         {
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
+            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, clubId);
 
             if (!isLeader)
                 throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách thành viên của CLB này.");
@@ -47,7 +47,7 @@ namespace BussinessLayer.Services
     AddClubMemberDto dto,
     long currentUserId)
         {
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, dto.ClubId);
+            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, dto.ClubId);
 
             if (!isLeader)
                 throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được thêm thành viên.");
@@ -94,6 +94,63 @@ namespace BussinessLayer.Services
                 JoinDate = membership.Joindate,
                 CurrentPosition = "Member"
             };
+
+
+        }
+        public async Task<ClubMemberDetailDto> GetMemberDetailAsync(long membershipId)
+        {
+            var member = await _repo.GetMemberDetailByMembershipIdAsync(membershipId);
+
+            if (member == null)
+                throw new Exception("Không tìm thấy thành viên trong CLB.");
+
+            return new ClubMemberDetailDto
+            {
+                MembershipId = member.Membershipid,
+                UserId = member.Userid,
+                ClubId = member.Clubid,
+
+                StudentId = member.User.Userinformation?.Studentid,
+                FullName = member.User.Userinformation?.Student?.Fullname,
+                SchoolEmail = member.User.Userinformation?.Student?.Schoolemail ?? member.User.Username,
+                PhoneNumber = member.User.Userinformation?.Phonenumber,
+                Avatar = member.User.Userinformation?.Avatar,
+                Major = member.User.Userinformation?.Student?.Major,
+                AcademicBatch = member.User.Userinformation?.Student?.Academicbatch,
+                Gender = member.User.Userinformation?.Student?.Gender,
+                DateOfBirth = member.User.Userinformation?.Student?.Dateofbirth,
+
+                MembershipStatus = member.Status,
+                JoinDate = member.Joindate,
+                LeftDate = member.Leftdate,
+                JoinReason = member.Joinreason,
+                PersonalGoal = member.Personalgoal,
+
+                CurrentPosition = member.Boardmembers
+                    .FirstOrDefault(bm => bm.Board.Status == "Đang đương nhiệm")
+                    ?.Position ?? "Member"
+            };
+        }
+
+        public async Task RemoveMemberAsync(long membershipId, long currentUserId)
+        {
+            var membership = await _repo.GetMembershipByIdAsync(membershipId);
+
+            if (membership == null)
+                throw new Exception("Không tìm thấy thành viên trong CLB.");
+
+            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, membership.Clubid);
+
+            if (!isLeader)
+                throw new UnauthorizedAccessException("Chỉ Manager của CLB mới được xóa thành viên.");
+
+            if (membership.Status == "Đã rút lui")
+                throw new Exception("Thành viên này đã rút khỏi CLB trước đó.");
+
+            membership.Status = "Đã rút lui";
+            membership.Leftdate = DateOnly.FromDateTime(DateTime.Now);
+
+            await _repo.UpdateMembershipAsync(membership);
         }
     }
 }
