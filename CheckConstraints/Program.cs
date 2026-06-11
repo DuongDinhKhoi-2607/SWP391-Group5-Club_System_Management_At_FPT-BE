@@ -6,19 +6,19 @@ await using var conn = new NpgsqlConnection(connStr);
 await conn.OpenAsync();
 
 // Query 1: Xem constraint definition
-Console.WriteLine("=== ck_event_status constraint ===");
+Console.WriteLine("=== ck_semester_status constraint ===");
 await using (var cmd = new NpgsqlCommand(
-    "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_event_status'", conn))
+    "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_semester_status'", conn))
 await using (var reader = await cmd.ExecuteReaderAsync())
 {
     while (await reader.ReadAsync())
         Console.WriteLine(reader.GetString(0));
 }
 
-// Query 2: Xem constraint của user
-Console.WriteLine("\n=== ck_user_status constraint ===");
+// Query 2: Xem constraint của reportperiod
+Console.WriteLine("\n=== ck_reportperiod_status constraint ===");
 await using (var cmd2 = new NpgsqlCommand(
-    "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_user_status'", conn))
+    "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_reportperiod_status'", conn))
 await using (var reader2 = await cmd2.ExecuteReaderAsync())
 {
     while (await reader2.ReadAsync())

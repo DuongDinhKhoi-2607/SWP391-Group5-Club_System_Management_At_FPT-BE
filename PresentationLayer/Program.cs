@@ -70,7 +70,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience    = jwtSettings["Audience"],
             ValidateLifetime = true,
-            ClockSkew        = TimeSpan.Zero
+            ClockSkew        = TimeSpan.Zero,
+            RoleClaimType    = "system_role"
         };
     });
 
@@ -89,6 +90,12 @@ builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 // ── Dependency Injection — Auth (mới) ────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+
+// ── Dependency Injection — Semester & ReportPeriod ──────────
+builder.Services.AddScoped<ISemesterRepository, SemesterRepository>();
+builder.Services.AddScoped<ISemesterService, SemesterService>();
+builder.Services.AddScoped<IReportPeriodRepository, ReportPeriodRepository>();
+builder.Services.AddScoped<IReportPeriodService, ReportPeriodService>();
 
 // ─────────────────────────────────────────────────────────
 var app = builder.Build();
