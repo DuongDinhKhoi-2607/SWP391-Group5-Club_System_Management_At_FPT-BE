@@ -82,6 +82,11 @@ public class AuthController : ControllerBase
     [Authorize]
     public IActionResult Me()
     {
+        // Nếu gọi bằng TempToken (chọn CLB) thay vì AccessToken thật → báo lỗi rõ ràng
+        var purpose = User.FindFirst("purpose")?.Value;
+        if (purpose == "club_selection")
+            return Unauthorized(new { message = "Token này chỉ dùng để chọn CLB. Vui lòng dùng AccessToken sau khi đã chọn CLB." });
+
         var sub       = User.FindFirst("sub")?.Value
                      ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         var username  = User.FindFirst("username")?.Value;

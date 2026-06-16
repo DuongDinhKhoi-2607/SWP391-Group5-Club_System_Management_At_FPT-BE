@@ -52,7 +52,7 @@ public class AuthService : IAuthService
         var userInfo = BuildUserInfo(user);
 
         // 5. Admin → token ngay, không cần chọn CLB
-        if (user.Systemrole == "Admin")
+        if (user.Systemrole.Equals("ADMIN", StringComparison.OrdinalIgnoreCase))
         {
             var adminToken = GenerateAccessToken(user.Userid, user.Username, user.Systemrole,
                                                   clubId: null, clubRole: null);
@@ -64,48 +64,36 @@ public class AuthService : IAuthService
             };
         }
 
-        // 6. Lấy danh sách CLB đang sinh hoạt
+        // 6. Manager → token ngay, quản lý tất cả CLB, không cần chọn CLB
+        if (user.Systemrole.Equals("MANAGER", StringComparison.OrdinalIgnoreCase))
+        {
+            var managerToken = GenerateAccessToken(user.Userid, user.Username, user.Systemrole,
+                                                    clubId: null, clubRole: null);
+            return new LoginResponseDto
+            {
+                RequireClubSelection = false,
+                AccessToken = managerToken,
+                UserInfo = userInfo
+            };
+        }
+
+        // 7. Lấy danh sách CLB đang sinh hoạt (chỉ áp dụng cho Member)
         var memberships = await _authRepo.GetUserMembershipsWithClubAsync(user.Userid);
 
+        // 8. Member chưa thuộc CLB nào → báo lỗi, không cấp token
         if (memberships.Count == 0)
-        {
-            // User chưa thuộc CLB nào — vẫn cấp token nhưng không có club context
-            var noClubToken = GenerateAccessToken(user.Userid, user.Username, user.Systemrole,
-                                                   clubId: null, clubRole: null);
-            return new LoginResponseDto
-            {
-                RequireClubSelection = false,
-                AccessToken = noClubToken,
-                UserInfo = userInfo
-            };
-        }
+            throw new UnauthorizedAccessException("Tài khoản chưa thuộc CLB nào. Vui lòng liên hệ quản trị viên.");
 
-        if (memberships.Count == 1)
-        {
-            // Chỉ 1 CLB → tự chọn luôn
-            var membership = memberships[0];
-            var clubRole = DetermineClubRole(membership);
-            var singleToken = GenerateAccessToken(user.Userid, user.Username, user.Systemrole,
-                                                   clubId: membership.Clubid, clubRole: clubRole);
-            userInfo.ClubId   = membership.Clubid;
-            userInfo.ClubRole = clubRole;
-            return new LoginResponseDto
-            {
-                RequireClubSelection = false,
-                AccessToken = singleToken,
-                UserInfo = userInfo
-            };
-        }
-
-        // 7. Nhiều CLB → sinh tempToken + trả danh sách CLB
+        // 9. Member (dù 1 hay nhiều CLB) → LUÔN bắt buộc chọn CLB
+        //    để JWT có đầy đủ clubId + clubRole (Leader hoặc Member)
         var tempToken = GenerateTempToken(user.Userid);
         var clubList = memberships.Select(m => new ClubSelectionDto
         {
-            ClubId   = m.Clubid,
-            ClubName = m.Club.Clubname,
-            ClubCode = m.Club.Clubcode,
+            ClubId    = m.Clubid,
+            ClubName  = m.Club.Clubname,
+            ClubCode  = m.Club.Clubcode,
             LogoImage = m.Club.Logoimage,
-            ClubRole  = DetermineClubRole(m)
+            ClubRole  = DetermineClubRole(m)  // 'Leader' hoặc 'Member'
         }).ToList();
 
         return new LoginResponseDto
@@ -167,15 +155,16 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Xác định role trong CLB:
-    /// - Có Boardmember với Board (Clubboard) đang đương nhiệm → "Manager"
+    /// Xác định Position trong CLB (không phải Systemrole):
+    /// - Có Boardmember với Board (Clubboard) đang đương nhiệm → "Leader" (chức vụ nội bộ CLB)
     /// - Chỉ có Membership thường → "Member"
+    /// NOTE: Manager là Systemrole riêng, không liên quan hàm này.
     /// </summary>
     private static string DetermineClubRole(Membership membership)
     {
-        var isManager = membership.Boardmembers
+        var isLeader = membership.Boardmembers
             .Any(bm => bm.Board.Status == "Đang đương nhiệm");
-        return isManager ? "Manager" : "Member";
+        return isLeader ? "Leader" : "Thành viên";
     }
 
     /// <summary>Tạo JWT chính thức</summary>

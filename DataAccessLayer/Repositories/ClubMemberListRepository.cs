@@ -88,7 +88,7 @@ namespace DataAccessLayer.Repositories
                     {
                         Username = student.Schoolemail,
                         Passwordhash = HashSha256(student.Studentid),
-                        Systemrole = "Member",
+                        Systemrole = "MEMBER",
                         Status = "Hoạt động",
                         Createdat = DateTime.Now
                     };

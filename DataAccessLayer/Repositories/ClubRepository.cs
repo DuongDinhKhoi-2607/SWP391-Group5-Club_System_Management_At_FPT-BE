@@ -1,4 +1,4 @@
-using DataAccessLayer.Models;
+﻿using DataAccessLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Repositories
@@ -34,11 +34,11 @@ namespace DataAccessLayer.Repositories
                 {
                     managerId = managerStudent.Userinformation.Userid;
                     var u = managerStudent.Userinformation.User;
-                    if (u.Systemrole != "Manager") { u.Systemrole = "Manager"; u.Updatedat = DateTime.Now; await _context.SaveChangesAsync(); }
+                    if (!u.Systemrole.Equals("MANAGER", StringComparison.OrdinalIgnoreCase)) { u.Systemrole = "MANAGER"; u.Updatedat = DateTime.Now; await _context.SaveChangesAsync(); }
                 }
                 else
                 {
-                    var newUser = new User { Username = managerStudent.Studentid, Passwordhash = HashSha256(managerStudent.Studentid), Systemrole = "Manager", Status = "Ch\u1edd k\u00edch ho\u1ea1t", Createdat = DateTime.Now };
+                    var newUser = new User { Username = managerStudent.Studentid, Passwordhash = HashSha256(managerStudent.Studentid), Systemrole = "MANAGER", Status = "Ch\u1edd k\u00edch ho\u1ea1t", Createdat = DateTime.Now };
                     _context.Users.Add(newUser);
                     await _context.SaveChangesAsync();
                     _context.Userinformations.Add(new Userinformation { Userid = newUser.Userid, Studentid = managerStudent.Studentid, Isalumni = false, Infoupdatedat = DateTime.Now });
