@@ -9,7 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+// Fix Npgsql: cho phép DateTime.UtcNow ghi vào PostgreSQL timestamp without time zone
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Core services
 builder.Services.AddControllers();
@@ -74,7 +78,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings["Audience"],
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+
+            // Map claim "system_role" → ClaimTypes.Role
+            // để [Authorize(Roles = "ADMIN")] / [Authorize(Roles = "MEMBER")] hoạt động đúng
+            RoleClaimType = "system_role",
+
+            // Map claim "sub" → ClaimTypes.NameIdentifier
+            NameClaimType = "sub"
         };
     });
 
