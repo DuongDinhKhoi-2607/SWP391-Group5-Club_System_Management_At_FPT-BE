@@ -120,6 +120,14 @@ builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IClubMemberListService, ClubMemberListService>();
 builder.Services.AddScoped<IClubMemberListRepository, ClubMemberListRepository>();
 
+// Semester DI
+builder.Services.AddScoped<ISemesterService, SemesterService>();
+builder.Services.AddScoped<ISemesterRepository, SemesterRepository>();
+
+// ReportPeriod DI
+builder.Services.AddScoped<IReportPeriodService, ReportPeriodService>();
+builder.Services.AddScoped<IReportPeriodRepository, ReportPeriodRepository>();
+
 // Auth DI
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -133,12 +141,10 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
-
 // =======================
-// Enable CORS
+// Enable CORS — phải đặt TRƯỚC Authentication/Authorization
 // =======================
 app.UseCors("AllowAll");
-
 
 app.UseAuthentication();
 

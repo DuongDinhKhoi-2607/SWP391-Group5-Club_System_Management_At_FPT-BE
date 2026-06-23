@@ -35,7 +35,7 @@ public class SemesterController : ControllerBase
 
     // POST /api/semesters
     [HttpPost]
-    [Authorize(Roles = "Admin,ADMIN")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> CreateSemester([FromBody] CreateSemesterRequestDto requestDto)
     {
         try
@@ -55,7 +55,7 @@ public class SemesterController : ControllerBase
 
     // PUT /api/semesters/{id}
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,ADMIN")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> UpdateSemester(long id, [FromBody] UpdateSemesterRequestDto requestDto)
     {
         try

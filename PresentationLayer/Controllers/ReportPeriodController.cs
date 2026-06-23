@@ -36,7 +36,7 @@ public class ReportPeriodController : ControllerBase
 
     // POST /api/report-periods
     [HttpPost]
-    [Authorize(Roles = "Admin,ADMIN")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> CreateReportPeriod([FromBody] CreateReportPeriodRequestDto requestDto)
     {
         try
@@ -56,7 +56,7 @@ public class ReportPeriodController : ControllerBase
 
     // PUT /api/report-periods/{id}
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,ADMIN")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> UpdateReportPeriod(long id, [FromBody] UpdateReportPeriodRequestDto requestDto)
     {
         try

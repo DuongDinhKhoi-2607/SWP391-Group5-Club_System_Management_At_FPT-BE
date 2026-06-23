@@ -81,13 +81,15 @@ public class SemesterService : ISemesterService
             SemesterId = semester.Semesterid,
             SemesterName = semester.Semestername,
             Description = semester.Description,
-            Status = semester.Status,
+            // Tính động mỗi lần trả về — không dùng status lưu trong DB
+            // để tránh stale khi ngày tháng thay đổi
+            Status = DetermineStatus(semester.Startdate, semester.Enddate),
             StartDate = semester.Startdate,
             EndDate = semester.Enddate
         };
     }
 
-    private string DetermineStatus(DateOnly startDate, DateOnly endDate)
+    private static string DetermineStatus(DateOnly startDate, DateOnly endDate)
     {
         var today = DateOnly.FromDateTime(DateTime.Now);
         if (today < startDate) return "Dự kiến";
