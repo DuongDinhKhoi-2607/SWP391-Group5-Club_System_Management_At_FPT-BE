@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Repositories;
 
@@ -24,7 +24,7 @@ namespace BussinessLayer.Services
 
             var members = await _repo.GetActiveMembersByClubAsync(clubId);
 
-            return members.Select(m => new ClubMemberListDto
+            var result = members.Select(m => new ClubMemberListDto
             {
                 MembershipId = m.Membershipid,
                 UserId = m.Userid,
@@ -42,6 +42,14 @@ namespace BussinessLayer.Services
                     .FirstOrDefault(bm => bm.Board.Status == "Đang đương nhiệm")
                     ?.Position ?? "Member"
             }).ToList();
+
+            // Đưa Leader và Boardmember lên đầu
+            return result.OrderBy(m =>
+            {
+                if (string.Equals(m.CurrentPosition, "Leader", StringComparison.OrdinalIgnoreCase)) return 0;
+                if (m.CurrentPosition != "Member") return 1;
+                return 2;
+            }).ThenBy(m => m.FullName).ToList();
         }
         public async Task<ClubMemberListDto> AddMemberByStudentIdAsync(
     AddClubMemberDto dto,
