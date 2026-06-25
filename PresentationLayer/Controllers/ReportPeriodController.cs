@@ -17,6 +17,10 @@ public class ReportPeriodController : ControllerBase
         _reportPeriodService = reportPeriodService;
     }
 
+    [HttpGet("reports/count/pending")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> GetPendingReportsCount() => Ok(await _reportPeriodService.GetPendingReportsCountAsync());
+
     // GET /api/report-periods
     // Filter by semesterId: GET /api/report-periods?semesterId=1
     [HttpGet]

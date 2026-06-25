@@ -12,4 +12,6 @@ public interface IAuthRepository
 
     /// <summary>Cập nhật thời gian đăng nhập cuối</summary>
     Task UpdateLastLoginAsync(long userId);
+
+    Task<int> CountUsersAsync();
 }

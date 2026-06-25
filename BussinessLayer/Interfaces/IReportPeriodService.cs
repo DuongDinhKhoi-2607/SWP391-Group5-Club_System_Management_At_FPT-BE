@@ -8,4 +8,5 @@ public interface IReportPeriodService
     Task<ReportPeriodResponseDto> GetReportPeriodByIdAsync(long id);
     Task<ReportPeriodResponseDto> CreateReportPeriodAsync(CreateReportPeriodRequestDto requestDto);
     Task<ReportPeriodResponseDto> UpdateReportPeriodAsync(long id, UpdateReportPeriodRequestDto requestDto);
+    Task<int> GetPendingReportsCountAsync();
 }

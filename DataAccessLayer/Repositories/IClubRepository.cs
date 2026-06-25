@@ -16,6 +16,7 @@ namespace DataAccessLayer.Repositories
         Task<Club?> GetByIdAsync(long clubId);
         Task<(Club club, long? leaderId, string? leaderStudentId, string? leaderFullName, string? leaderEmail)?> GetWithLeaderByIdAsync(long clubId);
         Task<IEnumerable<Club>> GetAllAsync(string? statusFilter);
+        Task<int> CountClubsAsync(string? statusFilter);
         Task<bool> IsLeaderOfClubAsync(long userId, long clubId);
         Task UpdateAsync(Club club);
         Task UpdateStatusAsync(long clubId, string newStatus);

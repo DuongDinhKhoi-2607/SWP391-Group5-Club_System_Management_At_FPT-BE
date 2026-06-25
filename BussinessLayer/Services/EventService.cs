@@ -62,6 +62,11 @@ namespace BussinessLayer.Services
             return await _repo.GetAllAsync(statusFilter);
         }
 
+        public async Task<int> GetTotalEventsAsync(string? statusFilter)
+        {
+            return await _repo.CountEventsAsync(statusFilter);
+        }
+
         public async Task<Event?> GetEventByIdAsync(long eventId)
         {
             return await _repo.GetByIdAsync(eventId);

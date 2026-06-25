@@ -17,6 +17,7 @@ namespace BussinessLayer.Interfaces
 
         /// <summary>[ADMIN / All] Danh sách CLB, filter theo status nếu truyền vào.</summary>
         Task<IEnumerable<ClubListDto>> GetAllAsync(string? statusFilter);
+        Task<int> GetTotalClubsAsync(string? statusFilter);
 
         /// <summary>[All] Chi tiết 1 CLB kèm thông tin Leader hiện tại.</summary>
         Task<ClubDetailDto?> GetByIdAsync(long clubId);

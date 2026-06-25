@@ -67,7 +67,7 @@ namespace DataAccessLayer.Repositories
                     {
                         Username     = leaderStudent.Studentid,
                         Passwordhash = HashSha256(leaderStudent.Studentid),
-                        Systemrole   = "MEMBER",
+                        Systemrole   = "Member",
                         Status       = "Hoạt động",   // phải khớp với ck_user_status constraint trong DB
                         Createdat    = DateTime.Now
                     };
@@ -193,6 +193,14 @@ namespace DataAccessLayer.Repositories
             if (!string.IsNullOrWhiteSpace(statusFilter))
                 query = query.Where(c => c.Status == statusFilter);
             return await query.OrderByDescending(c => c.Createdat).ToListAsync();
+        }
+
+        public async Task<int> CountClubsAsync(string? statusFilter)
+        {
+            var query = _context.Clubs.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(statusFilter))
+                query = query.Where(c => c.Status == statusFilter);
+            return await query.CountAsync();
         }
 
         // ─────────────────────────────────────────────────────────────

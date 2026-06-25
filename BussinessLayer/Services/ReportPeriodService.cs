@@ -115,4 +115,9 @@ public class ReportPeriodService : IReportPeriodService
 
         return dto;
     }
+
+    public async Task<int> GetPendingReportsCountAsync()
+    {
+        return await _reportPeriodRepository.CountPendingReportsAsync();
+    }
 }

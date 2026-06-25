@@ -8,4 +8,5 @@ public interface IReportPeriodRepository
     Task<Reportperiod?> GetByIdAsync(long id);
     Task AddAsync(Reportperiod period);
     Task UpdateAsync(Reportperiod period);
+    Task<int> CountPendingReportsAsync();
 }

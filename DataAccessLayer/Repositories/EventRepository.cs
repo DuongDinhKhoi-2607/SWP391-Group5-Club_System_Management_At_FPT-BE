@@ -36,6 +36,14 @@ namespace DataAccessLayer.Repositories
             return await query.OrderByDescending(e => e.Starttime).ToListAsync();
         }
 
+        public async Task<int> CountEventsAsync(string? statusFilter)
+        {
+            var query = _context.Events.AsQueryable();
+            if (!string.IsNullOrEmpty(statusFilter))
+                query = query.Where(e => e.Status == statusFilter);
+            return await query.CountAsync();
+        }
+
         public async Task<List<Event>> GetByClubIdAsync(long clubId)
         {
             return await _context.Events

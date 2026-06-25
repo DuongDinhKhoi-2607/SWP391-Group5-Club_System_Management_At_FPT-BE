@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace PresentationLayer.Controllers
@@ -15,6 +17,14 @@ namespace PresentationLayer.Controllers
         {
             _service = service;
         }
+
+        [HttpGet("count/total")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> GetTotalEvents() => Ok(await _service.GetTotalEventsAsync(null));
+
+        [HttpGet("count/pending")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> GetPendingEvents() => Ok(await _service.GetTotalEventsAsync("Lập kế hoạch"));
 
         private static EventResponseDto MapToResponse(Event e)
         {
@@ -46,12 +56,15 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost("create")]
+        [Authorize]   // Phải đăng nhập (Leader / Member)
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateEvent([FromForm] CreateEventDto dto)
         {
             try
             {
-                long userId = 2;
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!long.TryParse(userIdStr, out long userId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
 
                 var result = await _service.CreateEventAsync(dto, userId);
 
@@ -154,6 +167,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN xem tất cả sự kiện
         public async Task<IActionResult> GetAllEvents([FromQuery] string? status)
         {
             var events = await _service.GetAllEventsAsync(status);
@@ -166,6 +180,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("approve/{eventId}")]
+        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN duyệt sự kiện
         public async Task<IActionResult> ApproveEvent(long eventId)
         {
             try
@@ -189,6 +204,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("reject/{eventId}")]
+        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN từ chối sự kiện
         public async Task<IActionResult> RejectEvent(
             long eventId,
             [FromBody] RejectEventDto dto)

@@ -42,4 +42,9 @@ public class ReportPeriodRepository : IReportPeriodRepository
         _context.Reportperiods.Update(period);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<int> CountPendingReportsAsync()
+    {
+        return await _context.Clubreports.CountAsync(r => r.Status == "Chờ duyệt");
+    }
 }

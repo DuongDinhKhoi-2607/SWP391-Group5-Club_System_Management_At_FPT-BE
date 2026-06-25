@@ -6,6 +6,7 @@ namespace DataAccessLayer.Repositories
     {
         Task<Event> CreateAsync(Event newEvent);
         Task<List<Event>> GetAllAsync(string? statusFilter);
+        Task<int> CountEventsAsync(string? statusFilter);
         Task<Event?> GetByIdAsync(long eventId);
         Task<List<Event>> GetByClubIdAsync(long clubId);
         Task<List<Event>> GetApprovedByClubIdAsync(long clubId);

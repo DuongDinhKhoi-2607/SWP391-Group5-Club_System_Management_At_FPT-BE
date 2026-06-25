@@ -7,6 +7,7 @@ namespace BussinessLayer.Interfaces
     {
         Task<Event> CreateEventAsync(CreateEventDto dto, long currentUserId);
         Task<List<Event>> GetAllEventsAsync(string? statusFilter);
+        Task<int> GetTotalEventsAsync(string? statusFilter);
         Task<Event?> GetEventByIdAsync(long eventId);
         Task<List<Event>> GetEventsByClubAsync(long clubId);
         Task<List<Event>> GetApprovedEventsByClubAsync(long clubId);

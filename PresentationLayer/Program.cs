@@ -132,6 +132,10 @@ builder.Services.AddScoped<IReportPeriodRepository, ReportPeriodRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
+// User DI
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 var app = builder.Build();
 
 app.UseSwagger();

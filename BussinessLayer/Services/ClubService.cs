@@ -79,6 +79,11 @@ namespace BussinessLayer.Services
             });
         }
 
+        public async Task<int> GetTotalClubsAsync(string? statusFilter)
+        {
+            return await _repo.CountClubsAsync(statusFilter);
+        }
+
         public async Task<ClubDetailDto?> GetByIdAsync(long clubId)
         {
             var result = await _repo.GetWithLeaderByIdAsync(clubId);
