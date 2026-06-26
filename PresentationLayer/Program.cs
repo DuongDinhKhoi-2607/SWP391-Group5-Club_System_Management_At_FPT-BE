@@ -136,6 +136,10 @@ builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+// ClubReport DI
+builder.Services.AddScoped<IClubReportService, ClubReportService>();
+builder.Services.AddScoped<IClubReportRepository, ClubReportRepository>();
+
 var app = builder.Build();
 
 app.UseSwagger();

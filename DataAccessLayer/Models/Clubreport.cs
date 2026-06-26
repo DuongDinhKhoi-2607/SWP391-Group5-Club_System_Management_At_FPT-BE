@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DataAccessLayer.Models;
@@ -17,6 +17,12 @@ public partial class Clubreport
 
     public string? IcpdpFeedback { get; set; }
 
+    public long? Managerid { get; set; }
+
+    public string? Managernote { get; set; }
+
+    public DateTime? Managerreviewedat { get; set; }
+
     public int Totaleventsheld { get; set; }
 
     public decimal Financialbalance { get; set; }
@@ -28,6 +34,8 @@ public partial class Clubreport
     public DateTime? Reviewedat { get; set; }
 
     public virtual Club Club { get; set; } = null!;
+
+    public virtual User? Manager { get; set; }
 
     public virtual Reportperiod Reportperiod { get; set; } = null!;
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -202,7 +202,7 @@ public partial class ClubSystemDbContext : DbContext
                 .HasColumnName("reviewedat");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
-                .HasDefaultValueSql("'Chờ duyệt'::character varying")
+                .HasDefaultValueSql("'Chờ Manager duyệt'::character varying")
                 .HasColumnName("status");
             entity.Property(e => e.Submittedat)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -210,6 +210,11 @@ public partial class ClubSystemDbContext : DbContext
                 .HasColumnName("submittedat");
             entity.Property(e => e.Summarycontent).HasColumnName("summarycontent");
             entity.Property(e => e.Totaleventsheld).HasColumnName("totaleventsheld");
+            entity.Property(e => e.Managerid).HasColumnName("managerid");
+            entity.Property(e => e.Managernote).HasColumnName("managernote");
+            entity.Property(e => e.Managerreviewedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("managerreviewedat");
 
             entity.HasOne(d => d.Club).WithMany(p => p.Clubreports)
                 .HasForeignKey(d => d.Clubid)
@@ -220,6 +225,11 @@ public partial class ClubSystemDbContext : DbContext
                 .HasForeignKey(d => d.Reportperiodid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_clubreport_reportperiod");
+
+            entity.HasOne(d => d.Manager).WithMany()
+                .HasForeignKey(d => d.Managerid)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_clubreport_manager");
         });
 
         modelBuilder.Entity<Department>(entity =>
