@@ -144,6 +144,10 @@ builder.Services.AddScoped<IClubReportRepository, ClubReportRepository>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
+// Notification DI
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
 var app = builder.Build();
 
 app.UseSwagger();

@@ -47,6 +47,10 @@ public partial class ClubSystemDbContext : DbContext
 
     public virtual DbSet<Userinformation> Userinformations { get; set; }
 
+    public virtual DbSet<Notification> Notifications { get; set; }
+
+    public virtual DbSet<Notificationrecipient> Notificationrecipients { get; set; }
+
    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -651,6 +655,86 @@ public partial class ClubSystemDbContext : DbContext
             entity.HasOne(d => d.User).WithOne(p => p.Userinformation)
                 .HasForeignKey<Userinformation>(d => d.Userid)
                 .HasConstraintName("fk_userinformation_user");
+        });
+
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Notificationid).HasName("notification_pkey");
+            entity.ToTable("notification");
+
+            entity.Property(e => e.Notificationid)
+                .HasColumnName("notificationid")
+                .UseIdentityAlwaysColumn();
+            entity.Property(e => e.Senderid).HasColumnName("senderid");
+            entity.Property(e => e.Title)
+                .HasMaxLength(255)
+                .HasColumnName("title");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.Notificationtype)
+                .HasMaxLength(50)
+                .HasDefaultValueSql("'Thông báo chung'::character varying")
+                .HasColumnName("notificationtype");
+            entity.Property(e => e.Targettype)
+                .HasMaxLength(50)
+                .HasColumnName("targettype");
+            entity.Property(e => e.Targetrole)
+                .HasMaxLength(50)
+                .HasColumnName("targetrole");
+            entity.Property(e => e.Clubid).HasColumnName("clubid");
+            entity.Property(e => e.Eventid).HasColumnName("eventid");
+            entity.Property(e => e.Clubreportid).HasColumnName("clubreportid");
+            entity.Property(e => e.Reportperiodid).HasColumnName("reportperiodid");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+
+            entity.HasOne(d => d.Sender).WithMany()
+                .HasForeignKey(d => d.Senderid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_notification_sender");
+
+            entity.HasOne(d => d.Club).WithMany()
+                .HasForeignKey(d => d.Clubid)
+                .HasConstraintName("fk_notification_club");
+
+            entity.HasOne(d => d.Event).WithMany()
+                .HasForeignKey(d => d.Eventid)
+                .HasConstraintName("fk_notification_event");
+
+            entity.HasOne(d => d.Clubreport).WithMany()
+                .HasForeignKey(d => d.Clubreportid)
+                .HasConstraintName("fk_notification_clubreport");
+
+            entity.HasOne(d => d.Reportperiod).WithMany()
+                .HasForeignKey(d => d.Reportperiodid)
+                .HasConstraintName("fk_notification_reportperiod");
+        });
+
+        modelBuilder.Entity<Notificationrecipient>(entity =>
+        {
+            entity.HasKey(e => e.Notificationrecipientid).HasName("notificationrecipient_pkey");
+            entity.ToTable("notificationrecipient");
+
+            entity.Property(e => e.Notificationrecipientid)
+                .HasColumnName("notificationrecipientid")
+                .UseIdentityAlwaysColumn();
+            entity.Property(e => e.Notificationid).HasColumnName("notificationid");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Isread).HasColumnName("isread");
+            entity.Property(e => e.Readat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("readat");
+
+            entity.HasOne(d => d.Notification).WithMany(p => p.Notificationrecipients)
+                .HasForeignKey(d => d.Notificationid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_notificationrecipient_notification");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.Userid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_notificationrecipient_user");
         });
 
         OnModelCreatingPartial(modelBuilder);
