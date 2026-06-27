@@ -140,6 +140,10 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClubReportService, ClubReportService>();
 builder.Services.AddScoped<IClubReportRepository, ClubReportRepository>();
 
+// Dashboard DI
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+
 var app = builder.Build();
 
 app.UseSwagger();
