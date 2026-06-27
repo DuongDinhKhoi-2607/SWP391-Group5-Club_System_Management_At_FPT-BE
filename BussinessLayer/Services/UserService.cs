@@ -32,6 +32,33 @@ public class UserService : IUserService
         }).ToList();
     }
 
+    public async Task<UserDetailDto> GetUserByIdAsync(long userId)
+    {
+        var user = await _repo.GetUserDetailByIdAsync(userId);
+        if (user == null)
+            throw new Exception("Không tìm thấy người dùng.");
+
+        return new UserDetailDto
+        {
+            UserId = user.Userid,
+            Username = user.Username,
+            SystemRole = user.Systemrole,
+            Status = user.Status,
+            StudentId = user.Userinformation?.Studentid,
+            FullName = user.Userinformation?.Student?.Fullname,
+            SchoolEmail = user.Userinformation?.Student?.Schoolemail,
+            Avatar = user.Userinformation?.Avatar,
+            Phone = user.Userinformation?.Phonenumber,
+            Gender = user.Userinformation?.Student?.Gender,
+            Major = user.Userinformation?.Student?.Major,
+            AcademicBatch = user.Userinformation?.Student?.Academicbatch,
+            IsAlumni = user.Userinformation?.Isalumni,
+            GraduationDate = user.Userinformation?.Graduationdate,
+            CreatedAt = user.Createdat,
+            LastLoginAt = user.Lastloginat
+        };
+    }
+
     public async Task<UserListDto> CreateStaffUserAsync(CreateStaffUserDto dto)
     {
         dto.SystemRole = dto.SystemRole.ToUpper() == "ADMIN" ? "ADMIN" : 

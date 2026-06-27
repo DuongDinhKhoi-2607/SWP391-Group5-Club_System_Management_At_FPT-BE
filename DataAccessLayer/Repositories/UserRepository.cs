@@ -27,6 +27,14 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Userid == userId);
     }
 
+    public async Task<User?> GetUserDetailByIdAsync(long userId)
+    {
+        return await _context.Users
+            .Include(u => u.Userinformation)
+                .ThenInclude(ui => ui!.Student)
+            .FirstOrDefaultAsync(u => u.Userid == userId);
+    }
+
     public async Task<Student?> GetStudentByIdAsync(string studentId)
     {
         return await _context.Students

@@ -36,6 +36,29 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy thông tin chi tiết của một người dùng theo ID.
+    /// Yêu cầu: ADMIN
+    /// </summary>
+    [HttpGet("{userId:long}")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> GetUserById(long userId)
+    {
+        try
+        {
+            var user = await _userService.GetUserByIdAsync(userId);
+            return Ok(new { message = "Lấy thông tin người dùng thành công.", data = user });
+        }
+        catch (Exception ex) when (ex.Message.Contains("Không tìm thấy"))
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Tạo tài khoản dành riêng cho Ban quản trị (ADMIN hoặc MANAGER).
     /// Yêu cầu: ADMIN
     /// </summary>
