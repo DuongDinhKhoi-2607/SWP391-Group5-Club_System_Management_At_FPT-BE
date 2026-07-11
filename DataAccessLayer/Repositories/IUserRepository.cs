@@ -13,4 +13,5 @@ public interface IUserRepository
     Task<User> CreateUserAsync(User user, Userinformation userInfo);
     Task<User> CreateUserOnlyAsync(User user);
     Task UpdateUserAsync(User user);
+    Task<User?> GetUserWithHistoryByIdAsync(long userId);
 }

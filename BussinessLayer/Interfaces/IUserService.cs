@@ -9,4 +9,6 @@ public interface IUserService
     Task<UserListDto> CreateStaffUserAsync(CreateStaffUserDto dto);
     Task BlockUserAsync(long userId);
     Task UnblockUserAsync(long userId);
+    Task<UserDetailDto> UpdateProfileAsync(long userId, UpdateUserProfileDto dto);
+    Task<MemberActivityHistoryDto> GetMemberActivityHistoryAsync(long userId);
 }

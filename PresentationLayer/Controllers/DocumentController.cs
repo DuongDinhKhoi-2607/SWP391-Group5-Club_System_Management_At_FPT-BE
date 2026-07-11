@@ -1,6 +1,8 @@
-﻿using BussinessLayer.DTOs;
+using System.Security.Claims;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace PresentationLayer.Controllers
@@ -40,12 +42,19 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPost("upload")]
+        [Authorize]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Upload([FromForm] UploadDocumentDto dto)
         {
             try
             {
-                var result = await _service.UploadAsync(dto);
+                var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirst("system_role")?.Value ?? "";
+                var userIdStr = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                var result = await _service.UploadAsync(dto, currentUserId, role);
 
                 return Ok(new
                 {
@@ -53,6 +62,10 @@ namespace PresentationLayer.Controllers
                     total = result.Count,
                     data = result.Select(MapToDocumentResponse)
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -112,19 +125,30 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("update/{documentId}")]
+        [Authorize]
         public async Task<IActionResult> Update(
             long documentId,
             [FromBody] UpdateDocumentDto dto)
         {
             try
             {
-                var result = await _service.UpdateAsync(documentId, dto);
+                var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirst("system_role")?.Value ?? "";
+                var userIdStr = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                var result = await _service.UpdateAsync(documentId, dto, currentUserId, role);
 
                 return Ok(new
                 {
                     message = "Cập nhật tài liệu thành công.",
                     data = MapToDocumentResponse(result)
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -167,16 +191,27 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpDelete("delete/{documentId}")]
+        [Authorize]
         public async Task<IActionResult> Delete(long documentId)
         {
             try
             {
-                await _service.DeleteAsync(documentId);
+                var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirst("system_role")?.Value ?? "";
+                var userIdStr = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                await _service.DeleteAsync(documentId, currentUserId, role);
 
                 return Ok(new
                 {
                     message = "Xóa tài liệu thành công."
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {

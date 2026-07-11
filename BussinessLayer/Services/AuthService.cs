@@ -251,6 +251,59 @@ public class AuthService : IAuthService
         return long.Parse(sub);
     }
 
+    public string GenerateActivationToken(long userId, long clubId)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new("club_id", clubId.ToString()),
+            new("purpose", "activation")
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: Issuer,
+            audience: Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(24), // Hạn dùng 24h
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public (long userId, long clubId) ValidateActivationToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+
+        var principal = handler.ValidateToken(token, new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ValidateIssuer = true,
+            ValidIssuer = Issuer,
+            ValidateAudience = true,
+            ValidAudience = Audience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        }, out _);
+
+        var purpose = principal.FindFirst("purpose")?.Value;
+        if (purpose != "activation")
+            throw new UnauthorizedAccessException("Token không hợp lệ cho mục đích kích hoạt.");
+
+        var userIdStr = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? throw new UnauthorizedAccessException("Không tìm thấy userId trong token.");
+
+        var clubIdStr = principal.FindFirst("club_id")?.Value
+            ?? throw new UnauthorizedAccessException("Không tìm thấy clubId trong token.");
+
+        return (long.Parse(userIdStr), long.Parse(clubIdStr));
+    }
 
     private static UserInfoDto BuildUserInfo(User user)
     {

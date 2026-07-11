@@ -14,5 +14,11 @@ namespace DataAccessLayer.Repositories
         Task<bool> ExistsDuplicateEventAsync(long clubId, string eventName, DateTime startTime, long? ignoreEventId = null);
         Task<Event?> GetConflictByLocationAsync(long excludeEventId, string location, DateTime startTime, DateTime endTime);
         Task UpdateAsync(Event ev);
+        
+        Task<Participant?> GetParticipantAsync(long eventId, long userId);
+        Task<Participant> AddParticipantAsync(Participant participant);
+        Task UpdateParticipantAsync(Participant participant);
+        Task<int> CountParticipantsAsync(long eventId);
+        Task<bool> IsUserInClubAsync(long userId, long clubId);
     }
 }

@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -144,6 +144,108 @@ namespace PresentationLayer.Controllers
                     message = ex.Message,
                     inner = ex.InnerException?.Message
                 });
+            }
+        }
+
+        /// <summary>
+        /// Kích hoạt tài khoản và xác nhận gia nhập Câu lạc bộ thông qua token được gửi từ email.
+        /// </summary>
+        [HttpGet("/api/member/confirm-activation")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmActivation([FromQuery] string token)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                    return BadRequest("Token không được để trống.");
+
+                await _service.ActivateMemberAsync(token);
+
+                // Trả về HTML giao diện thân thiện thông báo thành công
+                var htmlContent = @"
+                    <!DOCTYPE html>
+                    <html lang='vi'>
+                    <head>
+                        <meta charset='UTF-8'>
+                        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                        <title>Kích hoạt thành công</title>
+                        <style>
+                            body {
+                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                background-color: #f4f7f6;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                            }
+                            .card {
+                                background: white;
+                                padding: 40px;
+                                border-radius: 8px;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                                text-align: center;
+                                max-width: 450px;
+                            }
+                            h1 {
+                                color: #4CAF50;
+                                margin-bottom: 20px;
+                            }
+                            p {
+                                color: #666;
+                                font-size: 16px;
+                                line-height: 1.6;
+                            }
+                            .icon {
+                                font-size: 60px;
+                                color: #4CAF50;
+                                margin-bottom: 20px;
+                            }
+                            .footer {
+                                margin-top: 30px;
+                                font-size: 14px;
+                                color: #999;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='card'>
+                            <div class='icon'>✓</div>
+                            <h1>Xác nhận thành công!</h1>
+                            <p>Tài khoản của bạn đã được kích hoạt và tư cách thành viên Câu lạc bộ đã chính thức hoạt động.</p>
+                            <p>Chúng tôi đã gửi một email chứa thông tin tài khoản và mật khẩu đăng nhập của bạn (hoặc xác nhận tham gia nếu bạn đã có tài khoản). Vui lòng kiểm tra lại hộp thư.</p>
+                            <div class='footer'>Hệ thống quản lý câu lạc bộ</div>
+                        </div>
+                    </body>
+                    </html>";
+
+                return Content(htmlContent, "text/html", System.Text.Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                var errorHtml = $@"
+                    <!DOCTYPE html>
+                    <html lang='vi'>
+                    <head>
+                        <meta charset='UTF-8'>
+                        <title>Kích hoạt thất bại</title>
+                        <style>
+                            body {{ font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                            .card {{ background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 450px; }}
+                            h1 {{ color: #f44336; margin-bottom: 20px; }}
+                            p {{ color: #666; font-size: 16px; line-height: 1.6; }}
+                            .icon {{ font-size: 60px; color: #f44336; margin-bottom: 20px; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class='card'>
+                            <div class='icon'>✗</div>
+                            <h1>Kích hoạt thất bại</h1>
+                            <p>{ex.Message}</p>
+                        </div>
+                    </body>
+                    </html>";
+                return Content(errorHtml, "text/html", System.Text.Encoding.UTF8);
             }
         }
     }

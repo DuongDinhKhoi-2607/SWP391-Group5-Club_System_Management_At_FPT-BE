@@ -8,10 +8,12 @@ namespace BussinessLayer.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _repo;
+    private readonly ICloudinaryService _cloudinaryService;
 
-    public UserService(IUserRepository repo)
+    public UserService(IUserRepository repo, ICloudinaryService cloudinaryService)
     {
         _repo = repo;
+        _cloudinaryService = cloudinaryService;
     }
 
     public async Task<List<UserListDto>> GetAllUsersAsync()
@@ -118,6 +120,142 @@ public class UserService : IUserService
 
         user.Status = "Hoạt động";
         await _repo.UpdateUserAsync(user);
+    }
+
+    public async Task<UserDetailDto> UpdateProfileAsync(long userId, UpdateUserProfileDto dto)
+    {
+        var user = await _repo.GetUserDetailByIdAsync(userId);
+        if (user == null)
+            throw new Exception("Không tìm thấy người dùng.");
+
+        if (user.Userinformation == null)
+            throw new Exception("Người dùng này không có hồ sơ thông tin cá nhân.");
+
+        // Cập nhật số điện thoại
+        if (dto.PhoneNumber != null)
+        {
+            user.Userinformation.Phonenumber = dto.PhoneNumber;
+        }
+
+        // Cập nhật giới tính
+        if (dto.Gender != null)
+        {
+            if (user.Userinformation.Student != null)
+            {
+                user.Userinformation.Student.Gender = dto.Gender;
+            }
+        }
+
+        // Cập nhật ngày sinh
+        if (dto.DateOfBirth.HasValue)
+        {
+            if (user.Userinformation.Student != null)
+            {
+                user.Userinformation.Student.Dateofbirth = DateOnly.FromDateTime(dto.DateOfBirth.Value);
+            }
+        }
+
+        // Tải lên avatar nếu có file gửi lên
+        if (dto.AvatarFile != null)
+        {
+            var avatarUrl = await _cloudinaryService.UploadFileAsync(dto.AvatarFile, $"avatars/user_{userId}");
+            user.Userinformation.Avatar = avatarUrl;
+        }
+
+        user.Userinformation.Infoupdatedat = DateTime.Now;
+
+        await _repo.UpdateUserAsync(user);
+
+        return new UserDetailDto
+        {
+            UserId = user.Userid,
+            Username = user.Username,
+            SystemRole = user.Systemrole,
+            Status = user.Status,
+            StudentId = user.Userinformation.Studentid,
+            FullName = user.Userinformation.Student?.Fullname,
+            SchoolEmail = user.Userinformation.Student?.Schoolemail,
+            Avatar = user.Userinformation.Avatar,
+            Phone = user.Userinformation.Phonenumber,
+            Gender = user.Userinformation.Student?.Gender,
+            Major = user.Userinformation.Student?.Major,
+            AcademicBatch = user.Userinformation.Student?.Academicbatch,
+            IsAlumni = user.Userinformation.Isalumni,
+            GraduationDate = user.Userinformation.Graduationdate,
+            CreatedAt = user.Createdat,
+        };
+    }
+
+    public async Task<MemberActivityHistoryDto> GetMemberActivityHistoryAsync(long userId)
+    {
+        var user = await _repo.GetUserWithHistoryByIdAsync(userId);
+        if (user == null)
+            throw new Exception("Không tìm thấy người dùng.");
+
+        var history = new MemberActivityHistoryDto();
+
+        // 1. Map Club History
+        if (user.Memberships != null)
+        {
+            foreach (var m in user.Memberships)
+            {
+                var clubDto = new MemberClubActivityDto
+                {
+                    ClubId = m.Clubid,
+                    ClubName = m.Club.Clubname,
+                    ClubCode = m.Club.Clubcode,
+                    LogoImage = m.Club.Logoimage,
+                    JoinDate = m.Joindate,
+                    LeftDate = m.Leftdate,
+                    Status = m.Status,
+                    PersonalGoal = m.Personalgoal,
+                    JoinReason = m.Joinreason
+                };
+
+                // Map Positions held in this membership
+                if (m.Boardmembers != null)
+                {
+                    foreach (var bm in m.Boardmembers)
+                    {
+                        clubDto.Positions.Add(new MemberPositionHistoryDto
+                        {
+                            Position = bm.Position,
+                            AppointedAt = bm.Appointedat,
+                            KpiScore = bm.KpiScore,
+                            BoardName = bm.Board?.Boardname ?? ""
+                        });
+                    }
+                }
+
+                history.ClubHistory.Add(clubDto);
+            }
+        }
+
+        // 2. Map Event History
+        if (user.Participants != null)
+        {
+            foreach (var p in user.Participants)
+            {
+                if (p.Event != null)
+                {
+                    history.EventHistory.Add(new MemberEventActivityDto
+                    {
+                        EventId = p.Eventid,
+                        EventName = p.Event.Eventname,
+                        StartTime = p.Event.Starttime,
+                        EndTime = p.Event.Endtime,
+                        RoleInEvent = p.Roleinevent,
+                        AttendanceStatus = p.Attendancestatus,
+                        CheckedInAt = p.Checkedinat,
+                        EvaluationScore = p.Evaluationscore,
+                        Feedback = p.Feedback,
+                        ClubName = p.Event.Club?.Clubname ?? ""
+                    });
+                }
+            }
+        }
+
+        return history;
     }
 
     private static string HashSha256(string input)

@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -8,14 +8,22 @@ namespace BussinessLayer.Services
     public class DocumentService : IDocumentService
     {
         private readonly IDocumentRepository _repo;
+        private readonly IClubRepository _clubRepo;
 
-        public DocumentService(IDocumentRepository repo)
+        public DocumentService(IDocumentRepository repo, IClubRepository clubRepo)
         {
             _repo = repo;
+            _clubRepo = clubRepo;
         }
 
-        public async Task<List<Document>> UploadAsync(UploadDocumentDto dto)
+        public async Task<List<Document>> UploadAsync(UploadDocumentDto dto, long currentUserId, string currentUserRole)
         {
+            // Kiểm tra phân quyền: chỉ ADMIN hoặc Leader của CLB mới được phép upload
+            var isAdmin = string.Equals(currentUserRole, "ADMIN", StringComparison.OrdinalIgnoreCase);
+            var isLeader = await _clubRepo.IsLeaderOfClubAsync(currentUserId, dto.ClubId);
+            if (!isAdmin && !isLeader)
+                throw new UnauthorizedAccessException("Chỉ Leader của CLB hoặc Admin mới được phép tải lên tài liệu.");
+
             if (dto.Files == null || dto.Files.Count == 0)
                 throw new Exception("Vui lòng chọn ít nhất 1 file.");
 
@@ -104,12 +112,18 @@ namespace BussinessLayer.Services
             return await _repo.GetByTypeAsync(documentTypeId);
         }
 
-        public async Task<Document> UpdateAsync(long documentId, UpdateDocumentDto dto)
+        public async Task<Document> UpdateAsync(long documentId, UpdateDocumentDto dto, long currentUserId, string currentUserRole)
         {
             var document = await _repo.GetByIdAsync(documentId);
 
             if (document == null)
                 throw new Exception("Không tìm thấy tài liệu.");
+
+            // Kiểm tra phân quyền: chỉ ADMIN hoặc Leader của CLB mới được phép cập nhật
+            var isAdmin = string.Equals(currentUserRole, "ADMIN", StringComparison.OrdinalIgnoreCase);
+            var isLeader = await _clubRepo.IsLeaderOfClubAsync(currentUserId, document.Clubid);
+            if (!isAdmin && !isLeader)
+                throw new UnauthorizedAccessException("Chỉ Leader của CLB hoặc Admin mới được phép chỉnh sửa tài liệu.");
 
             if (dto.AccessLevel != "Công khai" && dto.AccessLevel != "Nội bộ")
                 throw new Exception("AccessLevel chỉ được là 'Công khai' hoặc 'Nội bộ'.");
@@ -138,12 +152,18 @@ namespace BussinessLayer.Services
             return document;
         }
 
-        public async Task DeleteAsync(long documentId)
+        public async Task DeleteAsync(long documentId, long currentUserId, string currentUserRole)
         {
             var document = await _repo.GetByIdAsync(documentId);
 
             if (document == null)
                 throw new Exception("Không tìm thấy tài liệu.");
+
+            // Kiểm tra phân quyền: chỉ ADMIN hoặc Leader của CLB mới được phép xóa
+            var isAdmin = string.Equals(currentUserRole, "ADMIN", StringComparison.OrdinalIgnoreCase);
+            var isLeader = await _clubRepo.IsLeaderOfClubAsync(currentUserId, document.Clubid);
+            if (!isAdmin && !isLeader)
+                throw new UnauthorizedAccessException("Chỉ Leader của CLB hoặc Admin mới được phép xóa tài liệu.");
 
             var filePath = Path.Combine(
                 Directory.GetCurrentDirectory(),

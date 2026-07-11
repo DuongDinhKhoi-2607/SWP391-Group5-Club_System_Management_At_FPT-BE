@@ -17,4 +17,6 @@ public interface IAuthService
     /// Verify TempToken → sinh AccessToken chính thức có clubId + clubRole.
     /// </summary>
     Task<LoginResponseDto> SelectClubAsync(SelectClubRequestDto dto);
+    string GenerateActivationToken(long userId, long clubId);
+    (long userId, long clubId) ValidateActivationToken(string token);
 }

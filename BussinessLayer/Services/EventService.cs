@@ -8,10 +8,12 @@ namespace BussinessLayer.Services
     public class EventService : IEventService
     {
         private readonly IEventRepository _repo;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public EventService(IEventRepository repo)
+        public EventService(IEventRepository repo, ICloudinaryService cloudinaryService)
         {
             _repo = repo;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<Event> CreateEventAsync(CreateEventDto dto, long currentUserId)
@@ -204,6 +206,81 @@ namespace BussinessLayer.Services
             ev.Status = "Bị từ chối";
             await _repo.UpdateAsync(ev);
             return ev;
+        }
+
+        public async Task<Participant> RegisterParticipantAsync(long userId, long eventId, RegisterEventRequestDto dto)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                ?? throw new Exception("Không tìm thấy sự kiện.");
+
+            // Kiểm tra xem User này có thuộc Club tổ chức sự kiện hay không
+            var isMember = await _repo.IsUserInClubAsync(userId, ev.Clubid);
+            if (!isMember)
+                throw new Exception("Bạn không phải là thành viên của câu lạc bộ tổ chức sự kiện này, không thể đăng ký.");
+
+            if (ev.Status != "Đã duyệt" && ev.Status != "Đang diễn ra")
+                throw new Exception("Sự kiện chưa được duyệt hoặc đã kết thúc, không thể đăng ký.");
+
+            var currentParticipants = await _repo.CountParticipantsAsync(eventId);
+            if (currentParticipants >= ev.Targetparticipants)
+                throw new Exception("Sự kiện đã đủ số lượng người đăng ký.");
+
+            var existingParticipant = await _repo.GetParticipantAsync(eventId, userId);
+            if (existingParticipant != null)
+                throw new Exception("Bạn đã đăng ký tham gia sự kiện này rồi.");
+
+            var participant = new Participant
+            {
+                Eventid = eventId,
+                Userid = userId,
+                Roleinevent = dto.RoleInEvent,
+                Attendancestatus = "Đã đăng ký"
+            };
+
+            ev.Actualparticipants = currentParticipants + 1;
+            await _repo.UpdateAsync(ev);
+
+            return await _repo.AddParticipantAsync(participant);
+        }
+
+        public async Task<Participant> UploadEvidenceAsync(long userId, long eventId, UploadEventEvidenceDto dto)
+        {
+            var participant = await _repo.GetParticipantAsync(eventId, userId)
+                ?? throw new Exception("Bạn chưa đăng ký tham gia sự kiện này.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Feedback))
+            {
+                participant.Feedback = dto.Feedback;
+            }
+
+            if (participant.Evidences == null)
+            {
+                participant.Evidences = new List<Evidence>();
+            }
+
+            if (dto.EvidenceFiles != null && dto.EvidenceFiles.Any())
+            {
+                foreach (var file in dto.EvidenceFiles)
+                {
+                    if (file.Length > 10 * 1024 * 1024)
+                        throw new Exception($"File '{file.FileName}' vượt quá 10MB.");
+
+                    var secureUrl = await _cloudinaryService.UploadFileAsync(file, $"evidences/event_{eventId}");
+
+                    var evidence = new Evidence
+                    {
+                        Evidencename = file.FileName,
+                        Fileurl = secureUrl,
+                        Isverified = "Đang chờ",
+                        Uploadedat = DateTime.Now
+                    };
+
+                    participant.Evidences.Add(evidence);
+                }
+            }
+
+            await _repo.UpdateParticipantAsync(participant);
+            return participant;
         }
     }
 }

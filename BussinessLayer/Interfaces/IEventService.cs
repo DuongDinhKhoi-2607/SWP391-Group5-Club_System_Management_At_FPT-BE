@@ -15,5 +15,7 @@ namespace BussinessLayer.Interfaces
         Task<Event> ApproveEventAsync(long eventId);
         Task<Event> RejectEventAsync(long eventId, RejectEventDto dto);
         Task CancelEventAsync(long eventId);
+        Task<Participant> RegisterParticipantAsync(long userId, long eventId, RegisterEventRequestDto dto);
+        Task<Participant> UploadEvidenceAsync(long userId, long eventId, UploadEventEvidenceDto dto);
     }
 }

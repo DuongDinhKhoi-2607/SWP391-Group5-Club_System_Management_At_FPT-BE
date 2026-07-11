@@ -112,5 +112,37 @@ namespace DataAccessLayer.Repositories
             _context.Events.Update(ev);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Participant?> GetParticipantAsync(long eventId, long userId)
+        {
+            return await _context.Participants
+                .FirstOrDefaultAsync(p => p.Eventid == eventId && p.Userid == userId);
+        }
+
+        public async Task<Participant> AddParticipantAsync(Participant participant)
+        {
+            _context.Participants.Add(participant);
+            await _context.SaveChangesAsync();
+            return participant;
+        }
+
+        public async Task UpdateParticipantAsync(Participant participant)
+        {
+            _context.Participants.Update(participant);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> CountParticipantsAsync(long eventId)
+        {
+            return await _context.Participants
+                .Where(p => p.Eventid == eventId)
+                .CountAsync();
+        }
+
+        public async Task<bool> IsUserInClubAsync(long userId, long clubId)
+        {
+            return await _context.Memberships
+                .AnyAsync(m => m.Userid == userId && m.Clubid == clubId && m.Status == "Đang sinh hoạt");
+        }
     }
 }

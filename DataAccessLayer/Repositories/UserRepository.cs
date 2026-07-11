@@ -95,4 +95,18 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<User?> GetUserWithHistoryByIdAsync(long userId)
+    {
+        return await _context.Users
+            .Include(u => u.Memberships)
+                .ThenInclude(m => m.Club)
+            .Include(u => u.Memberships)
+                .ThenInclude(m => m.Boardmembers)
+                    .ThenInclude(bm => bm.Board)
+            .Include(u => u.Participants)
+                .ThenInclude(p => p.Event)
+                    .ThenInclude(e => e.Club)
+            .FirstOrDefaultAsync(u => u.Userid == userId);
+    }
 }

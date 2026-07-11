@@ -1,4 +1,4 @@
-﻿using BussinessLayer.DTOs;
+using BussinessLayer.DTOs;
 
 namespace BussinessLayer.Interfaces
 {
@@ -30,5 +30,7 @@ namespace BussinessLayer.Interfaces
         Task RemoveMemberAsync(
             long membershipId,
             long currentUserId);
+
+        Task ActivateMemberAsync(string token);
     }
 }

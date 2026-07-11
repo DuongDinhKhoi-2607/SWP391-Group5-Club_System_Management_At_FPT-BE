@@ -229,5 +229,84 @@ namespace PresentationLayer.Controllers
                 });
             }
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // POST /api/events/{eventId}/register
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [MEMBER] Đăng ký tham gia sự kiện (Không có file).
+        /// </summary>
+        [HttpPost("{eventId:long}/register")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> RegisterEvent(long eventId, [FromBody] RegisterEventRequestDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                var result = await _service.RegisterParticipantAsync(currentUserId, eventId, dto);
+
+                return Ok(new
+                {
+                    message = "Đăng ký tham gia sự kiện thành công.",
+                    data = new
+                    {
+                        participantId = result.Participantid,
+                        eventId = result.Eventid,
+                        userId = result.Userid,
+                        role = result.Roleinevent,
+                        status = result.Attendancestatus
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // POST /api/events/{eventId}/evidence
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [MEMBER] Upload minh chứng cho sự kiện đã đăng ký tham gia (Nhiều file).
+        /// </summary>
+        [HttpPost("{eventId:long}/evidence")]
+        [Authorize(Roles = "Member")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadEvidence(long eventId, [FromForm] UploadEventEvidenceDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                var result = await _service.UploadEvidenceAsync(currentUserId, eventId, dto);
+
+                return Ok(new
+                {
+                    message = "Upload minh chứng thành công.",
+                    data = new
+                    {
+                        participantId = result.Participantid,
+                        eventId = result.Eventid,
+                        userId = result.Userid,
+                        evidencesCount = result.Evidences?.Count ?? 0,
+                        feedback = result.Feedback
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

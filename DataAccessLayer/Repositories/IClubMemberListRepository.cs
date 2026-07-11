@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Models;
+using DataAccessLayer.Models;
 
 namespace DataAccessLayer.Repositories
 {
@@ -37,5 +37,7 @@ namespace DataAccessLayer.Repositories
 
         Task UpdateMembershipAsync(
             Membership membership);
+
+        Task<(User user, Membership membership, bool isNewUser, string? plainPassword)> ActivateMemberAsync(long userId, long clubId);
     }
 }

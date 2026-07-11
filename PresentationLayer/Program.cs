@@ -148,6 +148,15 @@ builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
+// Cloudinary DI
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Email DI
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Background Hosted Service to clean up expired pending memberships
+builder.Services.AddHostedService<PresentationLayer.BackgroundServices.PendingMemberCleanupService>();
+
 var app = builder.Build();
 
 app.UseSwagger();

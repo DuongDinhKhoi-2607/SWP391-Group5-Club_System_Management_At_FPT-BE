@@ -1,16 +1,31 @@
 using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Repositories;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BussinessLayer.Services
 {
     public class ClubMemberListService : IClubMemberListService
     {
         private readonly IClubMemberListRepository _repo;
+        private readonly IAuthService _authService;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _config;
 
-        public ClubMemberListService(IClubMemberListRepository repo)
+        public ClubMemberListService(
+            IClubMemberListRepository repo, 
+            IAuthService authService, 
+            IEmailService emailService,
+            IConfiguration config)
         {
             _repo = repo;
+            _authService = authService;
+            _emailService = emailService;
+            _config = config;
         }
 
         public async Task<List<ClubMemberListDto>> GetActiveMembersByClubAsync(
@@ -89,6 +104,22 @@ namespace BussinessLayer.Services
                 dto.PersonalGoal
             );
 
+            // Gửi email xác nhận kích hoạt tài khoản
+            var token = _authService.GenerateActivationToken(membership.Userid, membership.Clubid);
+            var baseUrl = _config["AppSettings:BaseUrl"] ?? "http://localhost:5242";
+            var activationLink = $"{baseUrl}/api/member/confirm-activation?token={token}";
+
+            var subject = "Xác nhận tham gia Câu lạc bộ và kích hoạt tài khoản";
+            var body = $@"
+                <h3>Chào bạn {student.Fullname},</h3>
+                <p>Bạn đã được mời tham gia câu lạc bộ với vai trò là thành viên.</p>
+                <p>Vui lòng nhấn vào liên kết bên dưới để kích hoạt tài khoản và xác nhận gia nhập câu lạc bộ:</p>
+                <p><a href='{activationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 4px; font-weight: bold;'>Xác nhận tham gia</a></p>
+                <p>Liên kết này có hiệu lực trong vòng 24 giờ.</p>
+                <p>Nếu bạn không yêu cầu tham gia câu lạc bộ, vui lòng bỏ qua email này.</p>";
+
+            await _emailService.SendEmailAsync(student.Schoolemail, subject, body);
+
             return new ClubMemberListDto
             {
                 MembershipId = membership.Membershipid,
@@ -159,6 +190,44 @@ namespace BussinessLayer.Services
             membership.Leftdate = DateOnly.FromDateTime(DateTime.Now);
 
             await _repo.UpdateMembershipAsync(membership);
+        }
+
+        public async Task ActivateMemberAsync(string token)
+        {
+            var (userId, clubId) = _authService.ValidateActivationToken(token);
+
+            var (user, membership, isNewUser, plainPassword) = await _repo.ActivateMemberAsync(userId, clubId);
+
+            var student = user.Userinformation?.Student;
+            if (student == null)
+                throw new Exception("Không tìm thấy thông tin sinh viên liên kết với tài khoản.");
+
+            string subject = "Kích hoạt tài khoản và xác nhận gia nhập CLB thành công!";
+            string body;
+
+            if (isNewUser && !string.IsNullOrWhiteSpace(plainPassword))
+            {
+                body = $@"
+                    <h3>Chào bạn {student.Fullname},</h3>
+                    <p>Tài khoản của bạn đã được kích hoạt thành công trên hệ thống Quản lý Câu lạc bộ!</p>
+                    <p>Dưới đây là thông tin đăng nhập chính thức của bạn:</p>
+                    <ul>
+                        <li><strong>Tài khoản (Email):</strong> {student.Schoolemail}</li>
+                        <li><strong>Mật khẩu:</strong> {plainPassword}</li>
+                    </ul>
+                    <p>Vui lòng đổi mật khẩu ngay sau khi đăng nhập lần đầu để đảm bảo an toàn cho tài khoản.</p>
+                    <p>Chúc bạn có những trải nghiệm tuyệt vời cùng câu lạc bộ!</p>";
+            }
+            else
+            {
+                body = $@"
+                    <h3>Chào bạn {student.Fullname},</h3>
+                    <p>Bạn đã xác nhận gia nhập câu lạc bộ thành công!</p>
+                    <p>Tài khoản của bạn đã ở trạng thái hoạt động. Bạn có thể sử dụng tài khoản và mật khẩu hiện tại của mình để đăng nhập và bắt đầu tham gia sinh hoạt cùng CLB.</p>
+                    <p>Chúc bạn có những trải nghiệm tuyệt vời cùng câu lạc bộ!</p>";
+            }
+
+            await _emailService.SendEmailAsync(student.Schoolemail, subject, body);
         }
     }
 }
