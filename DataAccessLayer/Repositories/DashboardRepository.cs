@@ -51,4 +51,10 @@ public class DashboardRepository : IDashboardRepository
         => await _context.Clubreports
             .Where(r => r.Status == "Chờ Manager duyệt")
             .CountAsync();
+
+    /// <summary>Evidence đang chờ kiểm tra</summary>
+    public async Task<int> CountPendingEvidencesAsync()
+        => await _context.Evidences
+            .Where(e => e.Isverified == "Đang chờ")
+            .CountAsync();
 }

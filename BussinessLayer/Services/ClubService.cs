@@ -33,9 +33,9 @@ namespace BussinessLayer.Services
                 throw new Exception($"Mã CLB '{dto.ClubCode}' đã tồn tại.");
 
             // Kiểm tra sinh viên
-            var student = await _repo.GetStudentByIdAsync(dto.ManagerStudentId);
+            var student = await _repo.GetStudentByIdAsync(dto.LeaderStudentId);
             if (student == null)
-                throw new Exception($"Không tìm thấy sinh viên có MSSV '{dto.ManagerStudentId}' trong hệ thống.");
+                throw new Exception($"Không tìm thấy sinh viên có MSSV '{dto.LeaderStudentId}' trong hệ thống.");
             if (student.Status != "Đang học")
                 throw new Exception($"Sinh viên '{student.Fullname}' không đủ điều kiện (trạng thái: {student.Status}).");
 

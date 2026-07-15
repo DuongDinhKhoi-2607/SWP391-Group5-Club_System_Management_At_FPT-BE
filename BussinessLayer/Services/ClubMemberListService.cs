@@ -32,7 +32,7 @@ namespace BussinessLayer.Services
             long clubId,
             long currentUserId)
         {
-            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, clubId);
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
 
             if (!isLeader)
                 throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách thành viên của CLB này.");
@@ -70,7 +70,7 @@ namespace BussinessLayer.Services
     AddClubMemberDto dto,
     long currentUserId)
         {
-            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, dto.ClubId);
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, dto.ClubId);
 
             if (!isLeader)
                 throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được thêm thành viên.");
@@ -178,10 +178,10 @@ namespace BussinessLayer.Services
             if (membership == null)
                 throw new Exception("Không tìm thấy thành viên trong CLB.");
 
-            var isLeader = await _repo.IsManagerOfClubAsync(currentUserId, membership.Clubid);
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, membership.Clubid);
 
             if (!isLeader)
-                throw new UnauthorizedAccessException("Chỉ Manager của CLB mới được xóa thành viên.");
+                throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được xóa thành viên.");
 
             if (membership.Status == "Đã rút lui")
                 throw new Exception("Thành viên này đã rút khỏi CLB trước đó.");

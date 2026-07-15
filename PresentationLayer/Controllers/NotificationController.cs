@@ -37,7 +37,7 @@ public class NotificationController : ControllerBase
     /// Yêu cầu: ADMIN
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,Manager")]
     public async Task<IActionResult> SendNotification([FromBody] CreateNotificationDto dto)
     {
         if (!ModelState.IsValid)
@@ -59,11 +59,11 @@ public class NotificationController : ControllerBase
     }
 
     /// <summary>
-    /// Admin xem lịch sử tất cả thông báo đã gửi.
-    /// Yêu cầu: ADMIN
+    /// Admin và Manager xem lịch sử tất cả thông báo đã gửi.
+    /// Yêu cầu: ADMIN, Manager
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,Manager")]
     public async Task<IActionResult> GetAllNotifications()
     {
         try

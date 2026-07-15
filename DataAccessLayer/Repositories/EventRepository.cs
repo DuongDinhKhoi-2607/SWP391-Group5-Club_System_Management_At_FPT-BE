@@ -144,5 +144,19 @@ namespace DataAccessLayer.Repositories
             return await _context.Memberships
                 .AnyAsync(m => m.Userid == userId && m.Clubid == clubId && m.Status == "Đang sinh hoạt");
         }
+
+        public async Task<Evidence?> GetEvidenceByIdAsync(long evidenceId)
+        {
+            return await _context.Evidences
+                .Include(e => e.Participant)
+                .ThenInclude(p => p.Event)
+                .FirstOrDefaultAsync(e => e.Evidenceid == evidenceId);
+        }
+
+        public async Task UpdateEvidenceAsync(Evidence evidence)
+        {
+            _context.Evidences.Update(evidence);
+            await _context.SaveChangesAsync();
+        }
     }
 }

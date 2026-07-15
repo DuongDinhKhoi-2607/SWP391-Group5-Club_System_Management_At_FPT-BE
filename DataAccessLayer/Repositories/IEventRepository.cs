@@ -20,5 +20,7 @@ namespace DataAccessLayer.Repositories
         Task UpdateParticipantAsync(Participant participant);
         Task<int> CountParticipantsAsync(long eventId);
         Task<bool> IsUserInClubAsync(long userId, long clubId);
+        Task<Evidence?> GetEvidenceByIdAsync(long evidenceId);
+        Task UpdateEvidenceAsync(Evidence evidence);
     }
 }

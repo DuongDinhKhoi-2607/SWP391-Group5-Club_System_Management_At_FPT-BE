@@ -19,12 +19,12 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpGet("count/total")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize(Roles = "ADMIN,Manager")]
         public async Task<IActionResult> GetTotalEvents() => Ok(await _service.GetTotalEventsAsync(null));
 
         [HttpGet("count/pending")]
-        [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> GetPendingEvents() => Ok(await _service.GetTotalEventsAsync("Lập kế hoạch"));
+        [Authorize(Roles = "ADMIN,Manager")]
+        public async Task<IActionResult> GetPendingEvents() => Ok(await _service.GetTotalEventsAsync("Chờ duyệt"));
 
         private static EventResponseDto MapToResponse(Event e)
         {
@@ -167,7 +167,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpGet("all")]
-        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN xem tất cả sự kiện
+        [Authorize(Roles = "ADMIN,Manager")]   // ADMIN và Manager xem tất cả sự kiện
         public async Task<IActionResult> GetAllEvents([FromQuery] string? status)
         {
             var events = await _service.GetAllEventsAsync(status);
@@ -180,7 +180,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("approve/{eventId}")]
-        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN duyệt sự kiện
+        [Authorize(Roles = "ADMIN,Manager")]   // ADMIN và Manager duyệt sự kiện
         public async Task<IActionResult> ApproveEvent(long eventId)
         {
             try
@@ -204,7 +204,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("reject/{eventId}")]
-        [Authorize(Roles = "ADMIN")]   // Chỉ ADMIN từ chối sự kiện
+        [Authorize(Roles = "ADMIN,Manager")]   // ADMIN và Manager từ chối sự kiện
         public async Task<IActionResult> RejectEvent(
             long eventId,
             [FromBody] RejectEventDto dto)
@@ -217,6 +217,33 @@ namespace PresentationLayer.Controllers
                 {
                     message = $"Sự kiện '{result.Eventname}' đã bị từ chối.",
                     rejectReason = dto.RejectReason,
+                    data = MapToResponse(result)
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
+        }
+
+        [HttpPut("request-edit/{eventId}")]
+        [Authorize(Roles = "ADMIN,Manager")]   // ADMIN và Manager yêu cầu chỉnh sửa sự kiện
+        public async Task<IActionResult> RequestEditEvent(
+            long eventId,
+            [FromBody] RejectEventDto dto) // Sử dụng chung DTO với RejectEvent vì cùng yêu cầu lý do
+        {
+            try
+            {
+                var result = await _service.RequestEditEventAsync(eventId, dto.RejectReason);
+
+                return Ok(new
+                {
+                    message = $"Yêu cầu chỉnh sửa sự kiện '{result.Eventname}' thành công.",
+                    reason = dto.RejectReason,
                     data = MapToResponse(result)
                 });
             }
@@ -300,6 +327,38 @@ namespace PresentationLayer.Controllers
                         userId = result.Userid,
                         evidencesCount = result.Evidences?.Count ?? 0,
                         feedback = result.Feedback
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // PATCH /api/events/evidence/{evidenceId}/review
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [ADMIN,Manager] Kiểm tra evidence tổng hợp của sự kiện; xác nhận evidence hợp lệ hoặc yêu cầu bổ sung
+        /// </summary>
+        [HttpPatch("evidence/{evidenceId:long}/review")]
+        [Authorize(Roles = "ADMIN,Manager")]
+        public async Task<IActionResult> ReviewEvidence(long evidenceId, [FromBody] ReviewEvidenceDto dto)
+        {
+            try
+            {
+                var result = await _service.ReviewEvidenceAsync(evidenceId, dto.Status);
+
+                return Ok(new
+                {
+                    message = $"Đã cập nhật trạng thái minh chứng thành '{result.Isverified}'.",
+                    data = new
+                    {
+                        evidenceId = result.Evidenceid,
+                        isVerified = result.Isverified,
+                        verifiedAt = result.Verifiedat
                     }
                 });
             }

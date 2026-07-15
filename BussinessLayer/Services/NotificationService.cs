@@ -31,7 +31,7 @@ public class NotificationService : INotificationService
 
             "Cá nhân" => dto.TargetUserIds == null || dto.TargetUserIds.Count == 0
                 ? throw new Exception("TargetUserIds là bắt buộc khi TargetType = 'Cá nhân'.")
-                : dto.TargetUserIds,
+                : dto.TargetUserIds.Where(x => x.HasValue).Select(x => (long)x!).ToList(),
 
             _ => throw new Exception("TargetType không hợp lệ. Chọn: 'Toàn hệ thống' | 'Theo role' | 'Theo CLB' | 'Cá nhân'.")
         };

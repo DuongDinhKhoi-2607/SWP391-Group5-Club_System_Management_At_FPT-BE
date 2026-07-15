@@ -2,12 +2,13 @@ using BussinessLayer.DTOs.ClubReport;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace PresentationLayer.Controllers;
 
 [Route("api/club-reports")]
 [ApiController]
-[Authorize(Roles = "ADMIN")]
+[Authorize(Roles = "ADMIN,Manager")]
 public class ClubReportController : ControllerBase
 {
     private readonly IClubReportService _service;
@@ -29,7 +30,8 @@ public class ClubReportController : ControllerBase
     {
         try
         {
-            var reports = await _service.GetAllAsync(reportPeriodId, clubId, status);
+            var role = User.IsInRole("Manager") ? "Manager" : "ADMIN";
+            var reports = await _service.GetAllAsync(reportPeriodId, clubId, status, role);
             return Ok(new { message = "Lấy danh sách báo cáo thành công.", data = reports });
         }
         catch (Exception ex)
@@ -46,7 +48,8 @@ public class ClubReportController : ControllerBase
     {
         try
         {
-            var report = await _service.GetByIdAsync(clubReportId);
+            var role = User.IsInRole("Manager") ? "Manager" : "ADMIN";
+            var report = await _service.GetByIdAsync(clubReportId, role);
             return Ok(new { message = "Lấy thông tin báo cáo thành công.", data = report });
         }
         catch (Exception ex)
@@ -61,6 +64,7 @@ public class ClubReportController : ControllerBase
     /// Chỉ có thể review khi báo cáo đang ở trạng thái "Chờ duyệt".
     /// </summary>
     [HttpPatch("{clubReportId:long}/review")]
+    [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> Review(long clubReportId, [FromBody] ReviewClubReportRequestDto dto)
     {
         if (!ModelState.IsValid)
@@ -73,6 +77,36 @@ public class ClubReportController : ControllerBase
             {
                 message = $"Báo cáo đã được cập nhật thành '{result.Status}'.",
                 data    = result
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// [Manager] Duyệt (chuyển cho Admin) hoặc từ chối báo cáo.
+    /// Body: { "status": "Chờ Admin duyệt" | "Từ chối", "managerNote": "..." }
+    /// </summary>
+    [HttpPatch("{clubReportId:long}/manager-review")]
+    [Authorize(Roles = "Manager")]
+    public async Task<IActionResult> ManagerReview(long clubReportId, [FromBody] ManagerReviewClubReportRequestDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var userIdStr = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (!long.TryParse(userIdStr, out long managerId))
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
+            var result = await _service.ManagerReviewAsync(clubReportId, dto, managerId);
+            return Ok(new
+            {
+                message = $"Báo cáo đã được xử lý thành '{result.Status}'.",
+                data = result
             });
         }
         catch (Exception ex)

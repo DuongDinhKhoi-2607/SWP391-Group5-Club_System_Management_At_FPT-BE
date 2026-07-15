@@ -36,3 +36,16 @@ public class ReviewClubReportRequestDto
     /// </summary>
     public string? IcpdpFeedback { get; set; }
 }
+
+public class ManagerReviewClubReportRequestDto
+{
+    /// <summary>
+    /// Giá trị hợp lệ: "Chờ Admin duyệt" | "Từ chối"
+    /// </summary>
+    public string Status { get; set; } = null!;
+
+    /// <summary>
+    /// Ghi chú của Manager
+    /// </summary>
+    public string? ManagerNote { get; set; }
+}

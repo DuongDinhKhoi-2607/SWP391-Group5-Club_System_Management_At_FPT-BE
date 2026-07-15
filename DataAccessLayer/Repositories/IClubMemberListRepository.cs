@@ -4,7 +4,7 @@ namespace DataAccessLayer.Repositories
 {
     public interface IClubMemberListRepository
     {
-        Task<bool> IsManagerOfClubAsync(long userId, long clubId);
+        Task<bool> IsLeaderOfClubAsync(long userId, long clubId);
         Task<List<Membership>> GetActiveMembersByClubAsync(
             long clubId);
 

@@ -8,4 +8,5 @@ public interface IDashboardRepository
     Task<int> CountEventsAsync(string? status = null);
     Task<int> CountPendingReportsForAdminAsync();
     Task<int> CountPendingReportsForManagerAsync();
+    Task<int> CountPendingEvidencesAsync();
 }

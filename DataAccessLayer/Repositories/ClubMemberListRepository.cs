@@ -12,7 +12,7 @@ namespace DataAccessLayer.Repositories
             _context = context;
         }
 
-        public async Task<bool> IsManagerOfClubAsync(long userId, long clubId)
+        public async Task<bool> IsLeaderOfClubAsync(long userId, long clubId)
         {
             return await _context.Memberships
                 .Include(m => m.Boardmembers)

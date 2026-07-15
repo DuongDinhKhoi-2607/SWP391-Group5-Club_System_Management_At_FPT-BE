@@ -29,7 +29,7 @@ public class CreateNotificationDto
     public long? ClubId { get; set; }
 
     /// <summary>Bắt buộc khi TargetType = 'Cá nhân' — danh sách userId nhận thông báo</summary>
-    public List<long>? TargetUserIds { get; set; }
+    public List<long?>? TargetUserIds { get; set; }
 
     // Optional context links
     public long? EventId { get; set; }

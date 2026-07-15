@@ -19,6 +19,15 @@ public class ClubReportService : IClubReportService
             "Từ chối"
         };
 
+    private static readonly HashSet<string> ManagerVisibleStatuses =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Chờ Manager duyệt",
+            "Chờ Admin duyệt",
+            "Đã duyệt",
+            "Từ chối"
+        };
+
     private readonly IClubReportRepository _repo;
 
     public ClubReportService(IClubReportRepository repo)
@@ -26,28 +35,29 @@ public class ClubReportService : IClubReportService
         _repo = repo;
     }
 
-    public async Task<List<ClubReportResponseDto>> GetAllAsync(long? reportPeriodId, long? clubId, string? status)
+    public async Task<List<ClubReportResponseDto>> GetAllAsync(long? reportPeriodId, long? clubId, string? status, string role = "ADMIN")
     {
-        // Nếu Admin không truyền status filter → mặc định chỉ lấy báo cáo đã qua Manager
-        // Nếu Admin truyền status cụ thể → chỉ lấy nếu nằm trong AdminVisibleStatuses
-        if (!string.IsNullOrWhiteSpace(status) && !AdminVisibleStatuses.Contains(status))
-            throw new Exception($"Admin không có quyền xem báo cáo ở trạng thái '{status}'. " +
-                                $"Chỉ xem được: {string.Join(", ", AdminVisibleStatuses)}");
+        var allowedStatuses = role == "Manager" ? ManagerVisibleStatuses : AdminVisibleStatuses;
+
+        if (!string.IsNullOrWhiteSpace(status) && !allowedStatuses.Contains(status))
+            throw new Exception($"Role {role} không có quyền xem báo cáo ở trạng thái '{status}'. " +
+                                $"Chỉ xem được: {string.Join(", ", allowedStatuses)}");
 
         // Nếu không filter status → lấy tất cả status Admin được thấy
         var effectiveStatus = string.IsNullOrWhiteSpace(status) ? null : status;
-        var reports = await _repo.GetAllForAdminAsync(reportPeriodId, clubId, effectiveStatus, AdminVisibleStatuses);
+        var reports = await _repo.GetAllForAdminAsync(reportPeriodId, clubId, effectiveStatus, allowedStatuses);
         return reports.Select(MapToDto).ToList();
     }
 
-    public async Task<ClubReportResponseDto> GetByIdAsync(long clubReportId)
+    public async Task<ClubReportResponseDto> GetByIdAsync(long clubReportId, string role = "ADMIN")
     {
+        var allowedStatuses = role == "Manager" ? ManagerVisibleStatuses : AdminVisibleStatuses;
+
         var report = await _repo.GetByIdAsync(clubReportId)
             ?? throw new Exception($"Không tìm thấy báo cáo với ID {clubReportId}.");
 
-        // Admin không được xem báo cáo còn đang ở tầng Manager
-        if (!AdminVisibleStatuses.Contains(report.Status))
-            throw new Exception($"Báo cáo này chưa được Manager chuyển lên. Admin chưa có quyền xem.");
+        if (!allowedStatuses.Contains(report.Status))
+            throw new Exception($"Role {role} không có quyền xem báo cáo này (Trạng thái: {report.Status}).");
 
         return MapToDto(report);
     }
@@ -70,6 +80,28 @@ public class ClubReportService : IClubReportService
         await _repo.UpdateAsync(report);
         return MapToDto(report);
     }
+
+    public async Task<ClubReportResponseDto> ManagerReviewAsync(long clubReportId, ManagerReviewClubReportRequestDto dto, long managerId)
+    {
+        if (dto.Status != "Chờ Admin duyệt" && dto.Status != "Từ chối")
+            throw new Exception("Trạng thái không hợp lệ. Chỉ chấp nhận: \"Chờ Admin duyệt\" hoặc \"Từ chối\".");
+
+        var report = await _repo.GetByIdAsync(clubReportId)
+            ?? throw new Exception($"Không tìm thấy báo cáo với ID {clubReportId}.");
+
+        if (report.Status != "Chờ Manager duyệt")
+            throw new Exception($"Báo cáo chưa thể duyệt vì đang ở trạng thái: {report.Status}.");
+
+        report.Status = dto.Status;
+        report.Managernote = dto.ManagerNote;
+        report.Managerid = managerId;
+        report.Managerreviewedat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+        await _repo.UpdateAsync(report);
+        return MapToDto(report);
+    }
+
+
 
     // ─── Mapper ─────────────────────────────────────────────────────────────
     private static ClubReportResponseDto MapToDto(Clubreport r) => new()

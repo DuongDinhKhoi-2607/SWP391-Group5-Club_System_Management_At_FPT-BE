@@ -40,4 +40,14 @@ public class DashboardService : IDashboardService
             PendingReportsForManager = pendingManager,
         };
     }
+
+    public async Task<int> GetPendingEventsCountAsync()
+    {
+        return await _repo.CountEventsAsync("Lập kế hoạch");
+    }
+
+    public async Task<int> GetPendingEvidencesCountAsync()
+    {
+        return await _repo.CountPendingEvidencesAsync();
+    }
 }

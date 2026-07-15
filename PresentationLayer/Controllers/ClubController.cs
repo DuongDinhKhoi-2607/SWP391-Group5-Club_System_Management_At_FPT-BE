@@ -65,7 +65,7 @@ namespace PresentationLayer.Controllers
 
         /// <summary>
         /// [ADMIN] Tạo CLB mới và thiết lập Leader.
-        /// Quy tắc với ManagerStudentId (MSSV của Leader):
+        /// Quy tắc với LeaderStudentId (MSSV của Leader):
         ///   ✅ Sinh viên TỒN TẠI trong bảng Student + CHƯA có tài khoản → hệ thống TỰ TẠO User (role=MEMBER, position=Leader).
         ///   ❌ Sinh viên KHÔNG TỒN TẠI → lỗi 400.
         ///   ❌ Sinh viên ĐÃ CÓ tài khoản → lỗi 400 (không tạo được).
@@ -91,7 +91,7 @@ namespace PresentationLayer.Controllers
                         result.Createdat,
                         leader = new
                         {
-                            studentId  = dto.ManagerStudentId,
+                            studentId  = dto.LeaderStudentId,
                             systemRole = "MEMBER",
                             position   = "Leader",
                             note       = "Tài khoản mới được tạo tự động với mật khẩu mặc định là MSSV."
@@ -176,5 +176,6 @@ namespace PresentationLayer.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
     }
 }

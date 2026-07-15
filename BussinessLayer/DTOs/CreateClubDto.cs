@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 namespace BussinessLayer.DTOs
 {
     public class CreateClubDto
@@ -9,7 +9,7 @@ namespace BussinessLayer.DTOs
         public string? FanpageUrl { get; set; }
         public string? LogoImage { get; set; }
         public DateOnly? FoundedDate { get; set; }
-        /// <summary>MSSV cua sinh vien se lam Manager. Tu dong tao tai khoan neu chua co.</summary>
-        public string ManagerStudentId { get; set; } = null!;
+        /// <summary>MSSV cua sinh vien se lam Leader. Tu dong tao tai khoan neu chua co.</summary>
+        public string LeaderStudentId { get; set; } = null!;
     }
 }

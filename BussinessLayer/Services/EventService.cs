@@ -131,7 +131,7 @@ namespace BussinessLayer.Services
             ev.Starttime = dto.StartTime;
             ev.Endtime = dto.EndTime;
 
-            if (ev.Status == "Đã duyệt")
+            if (ev.Status == "Đã duyệt" || ev.Status == "Bị từ chối" || ev.Status == "Yêu cầu chỉnh sửa")
                 ev.Status = "Chờ duyệt";
 
             await _repo.UpdateAsync(ev);
@@ -204,6 +204,22 @@ namespace BussinessLayer.Services
                 throw new Exception("Lý do từ chối không được để trống.");
 
             ev.Status = "Bị từ chối";
+            await _repo.UpdateAsync(ev);
+            return ev;
+        }
+
+        public async Task<Event> RequestEditEventAsync(long eventId, string reason)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                     ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            if (ev.Status != "Chờ duyệt")
+                throw new Exception($"Sự kiện đang ở trạng thái '{ev.Status}', không thể yêu cầu chỉnh sửa.");
+
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new Exception("Lý do yêu cầu chỉnh sửa không được để trống.");
+
+            ev.Status = "Yêu cầu chỉnh sửa";
             await _repo.UpdateAsync(ev);
             return ev;
         }
@@ -281,6 +297,21 @@ namespace BussinessLayer.Services
 
             await _repo.UpdateParticipantAsync(participant);
             return participant;
+        }
+
+        public async Task<Evidence> ReviewEvidenceAsync(long evidenceId, string status)
+        {
+            var evidence = await _repo.GetEvidenceByIdAsync(evidenceId)
+                ?? throw new Exception($"Không tìm thấy evidence ID = {evidenceId}.");
+
+            if (status != "Đã duyệt" && status != "Yêu cầu bổ sung" && status != "Từ chối")
+                throw new Exception("Trạng thái duyệt không hợp lệ.");
+
+            evidence.Isverified = status;
+            evidence.Verifiedat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            await _repo.UpdateEvidenceAsync(evidence);
+            return evidence;
         }
     }
 }

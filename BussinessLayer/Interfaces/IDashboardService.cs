@@ -5,4 +5,6 @@ namespace BussinessLayer.Interfaces;
 public interface IDashboardService
 {
     Task<DashboardStatsDto> GetDashboardStatsAsync();
+    Task<int> GetPendingEventsCountAsync();
+    Task<int> GetPendingEvidencesCountAsync();
 }
