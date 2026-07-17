@@ -19,5 +19,6 @@ namespace BussinessLayer.Interfaces
         Task<Participant> RegisterParticipantAsync(long userId, long eventId, RegisterEventRequestDto dto);
         Task<Participant> UploadEvidenceAsync(long userId, long eventId, UploadEventEvidenceDto dto);
         Task<Evidence> ReviewEvidenceAsync(long evidenceId, string status);
+
     }
 }

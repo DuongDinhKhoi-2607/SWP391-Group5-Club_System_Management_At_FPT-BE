@@ -14,6 +14,16 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Fix Render deployment issue: disable reloadOnChange for JSON configuration sources
+// to prevent reaching the inotify instance limit.
+foreach (var source in builder.Configuration.Sources)
+{
+    if (source is Microsoft.Extensions.Configuration.Json.JsonConfigurationSource jsonSource)
+    {
+        jsonSource.ReloadOnChange = false;
+    }
+}
+
 
 // Core services
 builder.Services.AddControllers();

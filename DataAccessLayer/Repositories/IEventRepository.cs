@@ -22,5 +22,6 @@ namespace DataAccessLayer.Repositories
         Task<bool> IsUserInClubAsync(long userId, long clubId);
         Task<Evidence?> GetEvidenceByIdAsync(long evidenceId);
         Task UpdateEvidenceAsync(Evidence evidence);
+
     }
 }
