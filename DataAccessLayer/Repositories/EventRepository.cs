@@ -159,6 +159,26 @@ namespace DataAccessLayer.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<Evidence>> GetEvidencesByEventIdAsync(long eventId)
+        {
+            return await _context.Evidences
+                .Include(e => e.Participant).ThenInclude(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
+                .Include(e => e.Participant).ThenInclude(p => p.Event).ThenInclude(ev => ev.Club)
+                .Where(e => e.Participant.Eventid == eventId)
+                .OrderByDescending(e => e.Uploadedat)
+                .ToListAsync();
+        }
+
+        public async Task<List<Evidence>> GetPendingEvidencesAsync()
+        {
+            return await _context.Evidences
+                .Include(e => e.Participant).ThenInclude(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
+                .Include(e => e.Participant).ThenInclude(p => p.Event).ThenInclude(ev => ev.Club)
+                .Where(e => e.Isverified == "Đang chờ")
+                .OrderByDescending(e => e.Uploadedat)
+                .ToListAsync();
+        }
+
 
     }
 }

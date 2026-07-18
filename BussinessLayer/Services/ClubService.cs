@@ -170,5 +170,53 @@ namespace BussinessLayer.Services
 
             await _repo.UpdateStatusAsync(clubId, newStatus);
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // STATS
+        // ─────────────────────────────────────────────────────────────
+
+        public async Task<ClubStatsDto> GetClubStatsAsync(long clubId)
+        {
+            var statsRaw = await _repo.GetClubStatsRawAsync(clubId);
+            if (statsRaw == null)
+                throw new Exception($"Không tìm thấy CLB với ID {clubId}.");
+
+            var stats = statsRaw.Value;
+            var club = await _repo.GetByIdAsync(clubId);
+
+            return new ClubStatsDto
+            {
+                ClubId           = clubId,
+                ClubName         = club!.Clubname,
+                ClubCode         = club.Clubcode,
+                Status           = club.Status,
+                TotalMembers     = stats.totalMembers,
+                ActiveMembers    = stats.activeMembers,
+                TotalEvents      = stats.totalEvents,
+                PendingEvents    = stats.pendingEvents,
+                ApprovedEvents   = stats.approvedEvents,
+                CompletedEvents  = stats.completedEvents,
+                TotalReports     = stats.totalReports,
+                PendingReports   = stats.pendingReports,
+                ApprovedReports  = stats.approvedReports,
+                TotalEvidences   = stats.totalEvidences,
+                PendingEvidences = stats.pendingEvidences
+            };
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // DELETE (Soft)
+        // ─────────────────────────────────────────────────────────────
+
+        public async Task DeleteClubAsync(long clubId)
+        {
+            var club = await _repo.GetByIdAsync(clubId)
+                ?? throw new Exception($"Không tìm thấy CLB với ID {clubId}.");
+
+            if (club.Status == "Giải thể")
+                throw new Exception("CLB này đã được giải thể trước đó.");
+
+            await _repo.UpdateStatusAsync(clubId, "Giải thể");
+        }
     }
 }

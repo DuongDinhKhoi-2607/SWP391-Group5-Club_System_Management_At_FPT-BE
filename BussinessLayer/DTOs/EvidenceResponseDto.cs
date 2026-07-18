@@ -13,5 +13,10 @@ namespace BussinessLayer.DTOs
         public DateTime UploadedAt { get; set; }
         public DateTime? VerifiedAt { get; set; }
         public string ParticipantName { get; set; } = null!;
+
+        // ── Bổ sung cho Evidence Listing ──
+        public string? EventName { get; set; }
+        public string? ClubName { get; set; }
+        public long? ClubId { get; set; }
     }
 }

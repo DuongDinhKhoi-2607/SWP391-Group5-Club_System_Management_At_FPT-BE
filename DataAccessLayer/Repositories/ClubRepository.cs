@@ -237,6 +237,48 @@ namespace DataAccessLayer.Repositories
 
 
         // ─────────────────────────────────────────────────────────────
+        // STATS
+        // ─────────────────────────────────────────────────────────────
+
+        public async Task<(int totalMembers, int activeMembers,
+              int totalEvents, int pendingEvents, int approvedEvents, int completedEvents,
+              int totalReports, int pendingReports, int approvedReports,
+              int totalEvidences, int pendingEvidences)?> GetClubStatsRawAsync(long clubId)
+        {
+            var club = await _context.Clubs.FindAsync(clubId);
+            if (club == null) return null;
+
+            // Thành viên
+            var totalMembers = await _context.Memberships.CountAsync(m => m.Clubid == clubId);
+            var activeMembers = await _context.Memberships.CountAsync(m => m.Clubid == clubId && m.Status == "Đang sinh hoạt");
+
+            // Sự kiện
+            var totalEvents = await _context.Events.CountAsync(e => e.Clubid == clubId);
+            var pendingEvents = await _context.Events.CountAsync(e => e.Clubid == clubId && e.Status == "Chờ duyệt");
+            var approvedEvents = await _context.Events.CountAsync(e => e.Clubid == clubId && e.Status == "Đã duyệt");
+            var completedEvents = await _context.Events.CountAsync(e => e.Clubid == clubId && e.Status == "Đã kết thúc");
+
+            // Báo cáo
+            var totalReports = await _context.Clubreports.CountAsync(r => r.Clubid == clubId);
+            var pendingReports = await _context.Clubreports.CountAsync(r => r.Clubid == clubId &&
+                (r.Status == "Chờ Manager duyệt" || r.Status == "Chờ Admin duyệt"));
+            var approvedReports = await _context.Clubreports.CountAsync(r => r.Clubid == clubId && r.Status == "Đã duyệt");
+
+            // Evidence — thông qua Participant → Event → Club
+            var totalEvidences = await _context.Evidences
+                .Where(ev => ev.Participant.Event.Clubid == clubId)
+                .CountAsync();
+            var pendingEvidences = await _context.Evidences
+                .Where(ev => ev.Participant.Event.Clubid == clubId && ev.Isverified == "Đang chờ")
+                .CountAsync();
+
+            return (totalMembers, activeMembers,
+                    totalEvents, pendingEvents, approvedEvents, completedEvents,
+                    totalReports, pendingReports, approvedReports,
+                    totalEvidences, pendingEvidences);
+        }
+
+        // ─────────────────────────────────────────────────────────────
         // HELPERS
         // ─────────────────────────────────────────────────────────────
 

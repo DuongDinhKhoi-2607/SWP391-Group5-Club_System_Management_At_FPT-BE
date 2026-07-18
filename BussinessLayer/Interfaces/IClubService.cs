@@ -23,5 +23,11 @@ namespace BussinessLayer.Interfaces
 
         /// <summary>[ADMIN] Đổi trạng thái CLB (Đang hoạt động / Tạm dừng / Giải thể).</summary>
         Task UpdateStatusAsync(long clubId, string newStatus);
+
+        /// <summary>[ADMIN,Manager] Lấy thống kê hoạt động chi tiết của một CLB.</summary>
+        Task<ClubStatsDto> GetClubStatsAsync(long clubId);
+
+        /// <summary>[ADMIN] Xóa CLB (soft delete — đổi status thành "Giải thể").</summary>
+        Task DeleteClubAsync(long clubId);
     }
 }

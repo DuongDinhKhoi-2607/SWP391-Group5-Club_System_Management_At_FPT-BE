@@ -177,5 +177,55 @@ namespace PresentationLayer.Controllers
             }
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/clubs/{clubId}/stats
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [ADMIN / Manager] Xem thống kê hoạt động chi tiết của một CLB.
+        /// Bao gồm: thành viên, sự kiện, báo cáo, evidence.
+        /// </summary>
+        [HttpGet("{clubId:long}/stats")]
+        [Authorize(Roles = "ADMIN,Manager")]
+        public async Task<IActionResult> GetClubStats(long clubId)
+        {
+            try
+            {
+                var stats = await _service.GetClubStatsAsync(clubId);
+                return Ok(new { message = "Lấy thống kê CLB thành công.", data = stats });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // DELETE /api/clubs/{clubId}
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [ADMIN] Xóa CLB (soft delete — đổi trạng thái thành "Giải thể").
+        /// Dữ liệu lịch sử được giữ lại.
+        /// </summary>
+        [HttpDelete("{clubId:long}")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> DeleteClub(long clubId)
+        {
+            try
+            {
+                await _service.DeleteClubAsync(clubId);
+                return Ok(new { message = $"CLB {clubId} đã được giải thể (soft delete).", clubId });
+            }
+            catch (Exception ex)
+            {
+                var innerMsg = ex.InnerException?.Message;
+                return BadRequest(new { 
+                    message = ex.Message, 
+                    inner = innerMsg 
+                });
+            }
+        }
+
     }
 }

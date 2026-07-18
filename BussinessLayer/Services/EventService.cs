@@ -314,6 +314,42 @@ namespace BussinessLayer.Services
             return evidence;
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // EVIDENCE LISTING
+        // ─────────────────────────────────────────────────────────────
+
+        public async Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long eventId)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            var evidences = await _repo.GetEvidencesByEventIdAsync(eventId);
+            return evidences.Select(MapToEvidenceDto).ToList();
+        }
+
+        public async Task<List<EvidenceResponseDto>> GetPendingEvidencesAsync()
+        {
+            var evidences = await _repo.GetPendingEvidencesAsync();
+            return evidences.Select(MapToEvidenceDto).ToList();
+        }
+
+        private static EvidenceResponseDto MapToEvidenceDto(Evidence e) => new()
+        {
+            EvidenceId      = e.Evidenceid,
+            ParticipantId   = e.Participantid,
+            EventId         = e.Participant?.Eventid ?? 0,
+            EvidenceName    = e.Evidencename,
+            FileUrl         = e.Fileurl,
+            IsVerified      = e.Isverified,
+            UploadedAt      = e.Uploadedat,
+            VerifiedAt      = e.Verifiedat,
+            ParticipantName = e.Participant?.User?.Userinformation?.Student?.Fullname
+                           ?? e.Participant?.User?.Username ?? "",
+            EventName       = e.Participant?.Event?.Eventname,
+            ClubName        = e.Participant?.Event?.Club?.Clubname,
+            ClubId          = e.Participant?.Event?.Clubid
+        };
+
 
     }
 }

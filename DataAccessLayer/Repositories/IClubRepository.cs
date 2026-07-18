@@ -20,5 +20,11 @@ namespace DataAccessLayer.Repositories
         Task<bool> IsLeaderOfClubAsync(long userId, long clubId);
         Task UpdateAsync(Club club);
         Task UpdateStatusAsync(long clubId, string newStatus);
+
+        /// <summary>Lấy số liệu thống kê hoạt động của một CLB.</summary>
+        Task<(int totalMembers, int activeMembers,
+              int totalEvents, int pendingEvents, int approvedEvents, int completedEvents,
+              int totalReports, int pendingReports, int approvedReports,
+              int totalEvidences, int pendingEvidences)?> GetClubStatsRawAsync(long clubId);
     }
 }

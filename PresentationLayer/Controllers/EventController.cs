@@ -120,6 +120,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("update/{eventId}")]
+        [Authorize]
         public async Task<IActionResult> UpdateEvent(
             long eventId,
             [FromBody] UpdateEventDto dto)
@@ -145,6 +146,7 @@ namespace PresentationLayer.Controllers
         }
 
         [HttpPut("cancel/{eventId}")]
+        [Authorize]
         public async Task<IActionResult> CancelEvent(long eventId)
         {
             try
@@ -360,6 +362,61 @@ namespace PresentationLayer.Controllers
                         isVerified = result.Isverified,
                         verifiedAt = result.Verifiedat
                     }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/events/{eventId}/evidences
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [ADMIN,Manager] Lấy danh sách evidence theo sự kiện.
+        /// Cho phép Manager/Admin browse evidence trước khi review.
+        /// </summary>
+        [HttpGet("{eventId:long}/evidences")]
+        [Authorize(Roles = "ADMIN,Manager")]
+        public async Task<IActionResult> GetEvidencesByEvent(long eventId)
+        {
+            try
+            {
+                var evidences = await _service.GetEvidencesByEventAsync(eventId);
+                return Ok(new
+                {
+                    message = "Lấy danh sách evidence thành công.",
+                    total = evidences.Count,
+                    data = evidences
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/events/evidences/pending
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [ADMIN,Manager] Lấy tất cả evidence đang chờ duyệt trong toàn hệ thống.
+        /// </summary>
+        [HttpGet("evidences/pending")]
+        [Authorize(Roles = "ADMIN,Manager")]
+        public async Task<IActionResult> GetPendingEvidences()
+        {
+            try
+            {
+                var evidences = await _service.GetPendingEvidencesAsync();
+                return Ok(new
+                {
+                    message = "Lấy danh sách evidence chờ duyệt thành công.",
+                    total = evidences.Count,
+                    data = evidences
                 });
             }
             catch (Exception ex)

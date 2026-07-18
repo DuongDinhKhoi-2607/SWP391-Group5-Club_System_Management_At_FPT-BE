@@ -20,5 +20,11 @@ namespace BussinessLayer.Interfaces
         Task<Participant> UploadEvidenceAsync(long userId, long eventId, UploadEventEvidenceDto dto);
         Task<Evidence> ReviewEvidenceAsync(long evidenceId, string status);
 
+        /// <summary>[ADMIN,Manager] Lấy danh sách evidence theo sự kiện.</summary>
+        Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long eventId);
+
+        /// <summary>[ADMIN,Manager] Lấy tất cả evidence đang chờ duyệt.</summary>
+        Task<List<EvidenceResponseDto>> GetPendingEvidencesAsync();
+
     }
 }
