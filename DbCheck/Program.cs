@@ -9,12 +9,12 @@ class Program
         using var conn = new NpgsqlConnection(connString);
         conn.Open();
 
-        using var cmd = new NpgsqlCommand("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_user_systemrole'", conn);
-        var result = cmd.ExecuteScalar();
-        Console.WriteLine($"SystemRole constraint: {result}");
-
-        using var cmd2 = new NpgsqlCommand("SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_user_status'", conn);
-        var result2 = cmd2.ExecuteScalar();
-        Console.WriteLine($"Status constraint: {result2}");
+        using var cmdAlter = new NpgsqlCommand(@"
+            ALTER TABLE membership DROP CONSTRAINT IF EXISTS ck_membership_status;
+            ALTER TABLE membership ADD CONSTRAINT ck_membership_status 
+            CHECK (status IN ('Đang sinh hoạt', 'Đã rút lui', 'Chờ kích hoạt', 'Bị khóa'));
+        ", conn);
+        cmdAlter.ExecuteNonQuery();
+        Console.WriteLine("Successfully updated ck_membership_status constraint!");
     }
 }
