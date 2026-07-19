@@ -30,6 +30,15 @@ namespace PresentationLayer.Controllers
             return long.Parse(userId);
         }
 
+        private long GetCurrentClubId()
+        {
+            var clubIdStr = User.FindFirst("club_id")?.Value;
+            if (string.IsNullOrWhiteSpace(clubIdStr))
+                throw new UnauthorizedAccessException("Không tìm thấy clubId trong token. Vui lòng chọn câu lạc bộ trước.");
+
+            return long.Parse(clubIdStr);
+        }
+
         [HttpGet("{clubId}/members")]
         public async Task<IActionResult> GetActiveMembersByClub(long clubId)
         {
@@ -62,15 +71,50 @@ namespace PresentationLayer.Controllers
             }
         }
 
+        [HttpGet("{clubId}/alumni")]
+        public async Task<IActionResult> GetAlumniMembersByClub(long clubId, [FromQuery] string? search)
+        {
+            try
+            {
+                long currentUserId = GetCurrentUserId();
+
+                var result = await _service.GetAlumniMembersByClubAsync(
+                    clubId,
+                    currentUserId,
+                    search
+                );
+
+                return Ok(new
+                {
+                    total = result.Count,
+                    data = result
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
+        }
+
         [HttpPost("/api/member/add-member-by-student-id")]
         public async Task<IActionResult> AddMemberByStudentId([FromBody] AddClubMemberDto dto)
         {
             try
             {
                 long currentUserId = GetCurrentUserId();
+                long currentClubId = GetCurrentClubId();
 
                 var result = await _service.AddMemberByStudentIdAsync(
                     dto,
+                    currentClubId,
                     currentUserId
                 );
 

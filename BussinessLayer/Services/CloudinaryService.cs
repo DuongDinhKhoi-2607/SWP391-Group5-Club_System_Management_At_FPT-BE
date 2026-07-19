@@ -31,6 +31,7 @@ namespace BussinessLayer.Services
             using (var stream = file.OpenReadStream())
             {
                 var isVideo = file.ContentType.StartsWith("video/");
+                var isImage = file.ContentType.StartsWith("image/");
 
                 if (isVideo)
                 {
@@ -41,9 +42,19 @@ namespace BussinessLayer.Services
                     };
                     uploadResult = await _cloudinary.UploadAsync(uploadParams);
                 }
-                else
+                else if (isImage)
                 {
                     var uploadParams = new ImageUploadParams()
+                    {
+                        File = new FileDescription(file.FileName, stream),
+                        Folder = folder
+                    };
+                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                }
+                else
+                {
+                    // Dùng RawUploadParams cho các file tài liệu (pdf, docx, zip, ...)
+                    var uploadParams = new RawUploadParams()
                     {
                         File = new FileDescription(file.FileName, stream),
                         Folder = folder

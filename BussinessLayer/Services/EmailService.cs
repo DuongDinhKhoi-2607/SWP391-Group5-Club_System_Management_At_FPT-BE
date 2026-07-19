@@ -20,7 +20,7 @@ public class EmailService : IEmailService
         var smtpServer = _config["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
         var smtpPortStr = _config["EmailSettings:SmtpPort"] ?? "587";
         var senderEmail = _config["EmailSettings:SenderEmail"] ?? "se182046duongdinhkhoi@gmail.com";
-        var senderPassword = _config["EmailSettings:SenderPassword"] ?? "vqgj xcpz qbsm tvbf";
+        var senderPassword = _config["EmailSettings:SenderPassword"] ?? "vqgjxcpzqbsmtvbf";
         var enableSslStr = _config["EmailSettings:EnableSsl"] ?? "true";
 
         if (!int.TryParse(smtpPortStr, out int smtpPort))

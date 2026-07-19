@@ -8,6 +8,9 @@ namespace DataAccessLayer.Repositories
         Task<List<Membership>> GetActiveMembersByClubAsync(
             long clubId);
 
+        Task<List<Membership>> GetAlumniMembersByClubAsync(
+            long clubId, string? searchQuery);
+
         Task<Student?> GetStudentByIdAsync(
             string studentId);
 

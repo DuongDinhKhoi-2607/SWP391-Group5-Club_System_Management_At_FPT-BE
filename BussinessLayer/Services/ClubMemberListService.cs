@@ -2,6 +2,7 @@ using BussinessLayer.DTOs;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Repositories;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,17 +16,20 @@ namespace BussinessLayer.Services
         private readonly IAuthService _authService;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ClubMemberListService(
             IClubMemberListRepository repo, 
             IAuthService authService, 
             IEmailService emailService,
-            IConfiguration config)
+            IConfiguration config,
+            IHttpContextAccessor httpContextAccessor)
         {
             _repo = repo;
             _authService = authService;
             _emailService = emailService;
             _config = config;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<List<ClubMemberListDto>> GetActiveMembersByClubAsync(
@@ -66,11 +70,44 @@ namespace BussinessLayer.Services
                 return 2;
             }).ThenBy(m => m.FullName).ToList();
         }
+
+        public async Task<List<ClubMemberListDto>> GetAlumniMembersByClubAsync(
+            long clubId,
+            long currentUserId,
+            string? searchQuery)
+        {
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
+
+            if (!isLeader)
+                throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách cựu thành viên của CLB này.");
+
+            var members = await _repo.GetAlumniMembersByClubAsync(clubId, searchQuery);
+
+            var result = members.Select(m => new ClubMemberListDto
+            {
+                MembershipId = m.Membershipid,
+                UserId = m.Userid,
+                StudentId = m.User.Userinformation?.Studentid,
+                FullName = m.User.Userinformation?.Student?.Fullname,
+                SchoolEmail = m.User.Userinformation?.Student?.Schoolemail ?? m.User.Username,
+                PhoneNumber = m.User.Userinformation?.Phonenumber,
+                Avatar = m.User.Userinformation?.Avatar,
+                Major = m.User.Userinformation?.Student?.Major,
+                AcademicBatch = m.User.Userinformation?.Student?.Academicbatch,
+                MembershipStatus = m.Status,
+                JoinDate = m.Joindate,
+
+                CurrentPosition = "Cựu thành viên"
+            }).ToList();
+
+            return result;
+        }
         public async Task<ClubMemberListDto> AddMemberByStudentIdAsync(
     AddClubMemberDto dto,
+    long clubId,
     long currentUserId)
         {
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, dto.ClubId);
+            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
 
             if (!isLeader)
                 throw new UnauthorizedAccessException("Chỉ Leader của CLB mới được thêm thành viên.");
@@ -90,7 +127,7 @@ namespace BussinessLayer.Services
             {
                 var isAlreadyMember = await _repo.IsActiveMemberAsync(
                     existingUser.Userid,
-                    dto.ClubId
+                    clubId
                 );
 
                 if (isAlreadyMember)
@@ -99,14 +136,17 @@ namespace BussinessLayer.Services
 
             var membership = await _repo.AddMemberByStudentIdAsync(
                 student,
-                dto.ClubId,
+                clubId,
                 dto.JoinReason,
                 dto.PersonalGoal
             );
 
             // Gửi email xác nhận kích hoạt tài khoản
             var token = _authService.GenerateActivationToken(membership.Userid, membership.Clubid);
-            var baseUrl = _config["AppSettings:BaseUrl"] ?? "http://localhost:5242";
+            var request = _httpContextAccessor.HttpContext?.Request;
+            var baseUrl = request != null 
+                ? $"{request.Scheme}://{request.Host}"
+                : _config["AppSettings:BaseUrl"] ?? "http://localhost:5242";
             var activationLink = $"{baseUrl}/api/member/confirm-activation?token={token}";
 
             var subject = "Xác nhận tham gia Câu lạc bộ và kích hoạt tài khoản";

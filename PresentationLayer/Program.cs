@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Core services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 
 // Swagger with JWT support
 builder.Services.AddSwaggerGen(c =>

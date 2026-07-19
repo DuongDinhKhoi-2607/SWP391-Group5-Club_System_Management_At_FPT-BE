@@ -33,11 +33,12 @@ public class NotificationController : ControllerBase
     // ──────────────────────────────────────────────
 
     /// <summary>
-    /// Admin gửi thông báo đến toàn hệ thống / theo role / theo CLB / cá nhân.
-    /// Yêu cầu: ADMIN
+    /// Admin, Manager gửi thông báo toàn hệ thống.
+    /// Leader gửi thông báo cho CLB của mình.
+    /// Yêu cầu: Đã đăng nhập (kiểm tra Role và ClubRole bên trong)
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "ADMIN,Manager")]
+    [Authorize]
     public async Task<IActionResult> SendNotification([FromBody] CreateNotificationDto dto)
     {
         if (!ModelState.IsValid)
@@ -48,6 +49,42 @@ public class NotificationController : ControllerBase
             var senderId = GetCurrentUserId();
             if (senderId == null)
                 return Unauthorized(new { message = "Không xác định được người gửi từ token." });
+
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+            
+            // Nếu không phải ADMIN hoặc Manager, phải là Leader
+            if (!role.Equals("ADMIN", StringComparison.OrdinalIgnoreCase) && 
+                !role.Equals("MANAGER", StringComparison.OrdinalIgnoreCase))
+            {
+                var clubRole = User.FindFirst("club_role")?.Value;
+                if (clubRole != "Leader")
+                {
+                    return StatusCode(403, new { message = "Chỉ Admin, Manager hoặc Leader mới có quyền gửi thông báo." });
+                }
+
+                var clubIdClaim = User.FindFirst("club_id")?.Value;
+                if (string.IsNullOrEmpty(clubIdClaim) || !long.TryParse(clubIdClaim, out long currentClubId))
+                {
+                    return StatusCode(403, new { message = "Không xác định được câu lạc bộ của bạn." });
+                }
+
+                // Kiểm tra logic gửi của Leader
+                if (dto.TargetType != "Theo CLB" && dto.TargetType != "Cá nhân")
+                {
+                    return StatusCode(403, new { message = "Leader chỉ có thể gửi thông báo 'Theo CLB' hoặc 'Cá nhân'." });
+                }
+                
+                if (dto.TargetType == "Theo CLB" && dto.ClubId != currentClubId)
+                {
+                    return StatusCode(403, new { message = "Bạn chỉ có thể gửi thông báo cho câu lạc bộ của mình." });
+                }
+                
+                // Gán luôn ClubId nếu chưa có để đảm bảo an toàn
+                if (dto.TargetType == "Theo CLB")
+                {
+                    dto.ClubId = currentClubId;
+                }
+            }
 
             var result = await _notificationService.SendNotificationAsync(senderId.Value, dto);
             return Ok(new { message = $"Đã gửi thông báo đến {result.RecipientCount} người nhận.", data = result });

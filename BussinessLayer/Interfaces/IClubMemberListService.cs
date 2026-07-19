@@ -11,11 +11,17 @@ namespace BussinessLayer.Interfaces
             long clubId,
             long currentUserId);
 
+        Task<List<ClubMemberListDto>> GetAlumniMembersByClubAsync(
+            long clubId, 
+            long currentUserId, 
+            string? searchQuery);
+
         /// <summary>
         /// Leader thêm thành viên bằng MSSV
         /// </summary>
         Task<ClubMemberListDto> AddMemberByStudentIdAsync(
             AddClubMemberDto dto,
+            long clubId,
             long currentUserId);
 
         /// <summary>

@@ -38,6 +38,34 @@ namespace DataAccessLayer.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Membership>> GetAlumniMembersByClubAsync(long clubId, string? searchQuery)
+        {
+            var query = _context.Memberships
+                .Include(m => m.User)
+                    .ThenInclude(u => u.Userinformation)
+                        .ThenInclude(ui => ui.Student)
+                .Include(m => m.Boardmembers)
+                    .ThenInclude(bm => bm.Board)
+                .Where(m => m.Clubid == clubId && m.Status == "Đã rút lui")
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var lowerSearch = searchQuery.ToLower();
+                query = query.Where(m =>
+                    (m.User.Userinformation != null && m.User.Userinformation.Student != null &&
+                     (m.User.Userinformation.Student.Fullname.ToLower().Contains(lowerSearch) ||
+                      m.User.Userinformation.Student.Studentid.ToLower().Contains(lowerSearch) ||
+                      m.User.Userinformation.Student.Schoolemail.ToLower().Contains(lowerSearch))) ||
+                    m.User.Username.ToLower().Contains(lowerSearch));
+            }
+
+            return await query
+                .OrderByDescending(m => m.Leftdate)
+                .ToListAsync();
+        }
+
+
         public async Task<Student?> GetStudentByIdAsync(string studentId)
         {
             return await _context.Students
