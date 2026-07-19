@@ -74,14 +74,14 @@ public class NotificationController : ControllerBase
                     return StatusCode(403, new { message = "Leader chỉ có thể gửi thông báo 'Theo CLB' hoặc 'Cá nhân'." });
                 }
                 
-                if (dto.TargetType == "Theo CLB" && dto.ClubId != currentClubId)
-                {
-                    return StatusCode(403, new { message = "Bạn chỉ có thể gửi thông báo cho câu lạc bộ của mình." });
-                }
-                
-                // Gán luôn ClubId nếu chưa có để đảm bảo an toàn
                 if (dto.TargetType == "Theo CLB")
                 {
+                    // Nếu user có truyền ClubId lên nhưng khác với ClubId của họ thì báo lỗi
+                    if (dto.ClubId.HasValue && dto.ClubId.Value != currentClubId)
+                    {
+                        return StatusCode(403, new { message = "Bạn chỉ có thể gửi thông báo cho câu lạc bộ của mình." });
+                    }
+                    // Nếu không truyền hoặc truyền đúng, gán/ghi đè luôn bằng currentClubId để an toàn
                     dto.ClubId = currentClubId;
                 }
             }
