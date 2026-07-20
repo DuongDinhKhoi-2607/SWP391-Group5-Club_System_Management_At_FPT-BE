@@ -36,9 +36,9 @@ namespace BussinessLayer.Services
             long clubId,
             long currentUserId)
         {
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
+            var isMember = await _repo.IsActiveMemberAsync(currentUserId, clubId);
 
-            if (!isLeader)
+            if (!isMember)
                 throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách thành viên của CLB này.");
 
             var members = await _repo.GetActiveMembersByClubAsync(clubId);
@@ -76,9 +76,9 @@ namespace BussinessLayer.Services
             long currentUserId,
             string? searchQuery)
         {
-            var isLeader = await _repo.IsLeaderOfClubAsync(currentUserId, clubId);
+            var isMember = await _repo.IsActiveMemberAsync(currentUserId, clubId);
 
-            if (!isLeader)
+            if (!isMember)
                 throw new UnauthorizedAccessException("Bạn không có quyền xem danh sách cựu thành viên của CLB này.");
 
             var members = await _repo.GetAlumniMembersByClubAsync(clubId, searchQuery);

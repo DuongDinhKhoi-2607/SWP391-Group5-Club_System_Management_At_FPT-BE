@@ -27,4 +27,5 @@ namespace DataAccessLayer.Repositories
               int totalReports, int pendingReports, int approvedReports,
               int totalEvidences, int pendingEvidences)?> GetClubStatsRawAsync(long clubId);
     }
-}
+    
+}
