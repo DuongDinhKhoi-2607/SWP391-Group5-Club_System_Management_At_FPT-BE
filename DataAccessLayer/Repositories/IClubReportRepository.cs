@@ -15,4 +15,7 @@ public interface IClubReportRepository
 
     /// <summary>Cập nhật báo cáo (dùng cho review).</summary>
     Task UpdateAsync(Clubreport report);
+
+    /// <summary>Tạo báo cáo mới.</summary>
+    Task AddAsync(Clubreport report);
 }

@@ -71,4 +71,10 @@ public class ClubReportRepository : IClubReportRepository
         _context.Clubreports.Update(report);
         await _context.SaveChangesAsync();
     }
+
+    public async Task AddAsync(Clubreport report)
+    {
+        _context.Clubreports.Add(report);
+        await _context.SaveChangesAsync();
+    }
 }

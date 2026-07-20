@@ -2,6 +2,7 @@ using BussinessLayer.DTOs.ReportPeriod;
 using BussinessLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace PresentationLayer.Controllers;
 
@@ -48,7 +49,11 @@ public class ReportPeriodController : ControllerBase
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var period = await _reportPeriodService.CreateReportPeriodAsync(requestDto);
+            var userIdStr = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? User.FindFirst("sub")?.Value;
+            if (!long.TryParse(userIdStr, out long adminId))
+                return Unauthorized(new { message = "Token không hợp lệ." });
+
+            var period = await _reportPeriodService.CreateReportPeriodAsync(requestDto, adminId);
             return Ok(period);
         }
         catch (Exception ex)

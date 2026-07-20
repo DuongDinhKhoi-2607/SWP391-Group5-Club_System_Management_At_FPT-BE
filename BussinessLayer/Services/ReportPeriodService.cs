@@ -1,5 +1,6 @@
 using BussinessLayer.DTOs.ReportPeriod;
 using BussinessLayer.DTOs.Semester;
+using BussinessLayer.DTOs.Notification;
 using BussinessLayer.Interfaces;
 using DataAccessLayer.Models;
 using DataAccessLayer.Repositories;
@@ -10,11 +11,13 @@ public class ReportPeriodService : IReportPeriodService
 {
     private readonly IReportPeriodRepository _reportPeriodRepository;
     private readonly ISemesterRepository _semesterRepository;
+    private readonly INotificationService _notificationService;
 
-    public ReportPeriodService(IReportPeriodRepository reportPeriodRepository, ISemesterRepository semesterRepository)
+    public ReportPeriodService(IReportPeriodRepository reportPeriodRepository, ISemesterRepository semesterRepository, INotificationService notificationService)
     {
         _reportPeriodRepository = reportPeriodRepository;
         _semesterRepository = semesterRepository;
+        _notificationService = notificationService;
     }
 
     public async Task<List<ReportPeriodResponseDto>> GetAllReportPeriodsAsync(long? semesterId)
@@ -32,7 +35,7 @@ public class ReportPeriodService : IReportPeriodService
         return MapToResponseDto(period);
     }
 
-    public async Task<ReportPeriodResponseDto> CreateReportPeriodAsync(CreateReportPeriodRequestDto requestDto)
+    public async Task<ReportPeriodResponseDto> CreateReportPeriodAsync(CreateReportPeriodRequestDto requestDto, long adminId)
     {
         var semester = await _semesterRepository.GetByIdAsync(requestDto.SemesterId);
         if (semester == null)
@@ -52,6 +55,18 @@ public class ReportPeriodService : IReportPeriodService
 
         await _reportPeriodRepository.AddAsync(period);
         period.Semester = semester; // Set for response mapping
+
+        // TỰ ĐỘNG GỬI THÔNG BÁO Ở ĐÂY
+        var notiDto = new CreateNotificationDto
+        {
+            Title = $"Mở kỳ báo cáo mới: {period.Periodname}",
+            Content = $"Yêu cầu các CLB nộp báo cáo trước ngày {period.Deadline:dd/MM/yyyy}. {period.Description}",
+            NotificationType = "Báo cáo",
+            TargetType = "Toàn hệ thống",
+            ReportPeriodId = period.Reportperiodid
+        };
+        await _notificationService.SendNotificationAsync(adminId, notiDto);
+
         return MapToResponseDto(period);
     }
 

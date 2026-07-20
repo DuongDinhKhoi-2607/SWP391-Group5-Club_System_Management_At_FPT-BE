@@ -49,3 +49,20 @@ public class ManagerReviewClubReportRequestDto
     /// </summary>
     public string? ManagerNote { get; set; }
 }
+
+public class SubmitClubReportRequestDto
+{
+    public long ReportPeriodId { get; set; }
+    public string ReportTitle { get; set; } = null!;
+    public string? SummaryContent { get; set; }
+    public int TotalEventsHeld { get; set; }
+    public decimal FinancialBalance { get; set; }
+}
+
+public class UpdateClubReportRequestDto
+{
+    public string ReportTitle { get; set; } = null!;
+    public string? SummaryContent { get; set; }
+    public int TotalEventsHeld { get; set; }
+    public decimal FinancialBalance { get; set; }
+}
