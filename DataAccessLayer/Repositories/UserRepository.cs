@@ -92,8 +92,19 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateUserAsync(User user)
     {
-        _context.Users.Update(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            if (_context.Entry(user).State == EntityState.Detached)
+            {
+                _context.Users.Update(user);
+            }
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            var innerMessage = ex.InnerException?.InnerException?.Message ?? ex.InnerException?.Message ?? ex.Message;
+            throw new Exception($"Database Error: {innerMessage}");
+        }
     }
 
     public async Task<User?> GetUserWithHistoryByIdAsync(long userId)
