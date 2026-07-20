@@ -169,8 +169,31 @@ namespace PresentationLayer.Controllers
             {
                 var document = await _service.GetForDownloadAsync(documentId);
 
-                // Chuyển hướng người dùng đến URL của Cloudinary để tải file
-                return Redirect(document.Fileurl);
+                // Nếu là file lưu local từ trước (Bắt đầu bằng /)
+                if (document.Fileurl.StartsWith("/"))
+                {
+                    var filePath = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        document.Fileurl.TrimStart('/')
+                    );
+
+                    if (!System.IO.File.Exists(filePath))
+                        return NotFound(new { message = "File không tồn tại trên server nội bộ." });
+
+                    var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                    return File(bytes, "application/octet-stream", document.Documentname);
+                }
+                
+                // Nếu là file Cloudinary (Bắt đầu bằng http)
+                using var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync(document.Fileurl, HttpCompletionOption.ResponseHeadersRead);
+                
+                if (!response.IsSuccessStatusCode)
+                    return NotFound(new { message = "Không thể lấy file từ máy chủ Cloudinary." });
+
+                var stream = await response.Content.ReadAsStreamAsync();
+                return File(stream, "application/octet-stream", document.Documentname);
             }
             catch (Exception ex)
             {

@@ -137,23 +137,7 @@ public class UserService : IUserService
             user.Userinformation.Phonenumber = dto.PhoneNumber;
         }
 
-        // Cập nhật giới tính
-        if (dto.Gender != null)
-        {
-            if (user.Userinformation.Student != null)
-            {
-                user.Userinformation.Student.Gender = dto.Gender;
-            }
-        }
-
-        // Cập nhật ngày sinh
-        if (dto.DateOfBirth.HasValue)
-        {
-            if (user.Userinformation.Student != null)
-            {
-                user.Userinformation.Student.Dateofbirth = DateOnly.FromDateTime(dto.DateOfBirth.Value);
-            }
-        }
+        // Không cập nhật thông tin Student (Giới tính, Ngày sinh) vì đây là dữ liệu gốc của trường.
 
         // Tải lên avatar nếu có file gửi lên
         if (dto.AvatarFile != null)
