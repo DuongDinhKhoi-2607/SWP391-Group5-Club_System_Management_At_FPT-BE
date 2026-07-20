@@ -44,6 +44,8 @@ namespace PresentationLayer.Controllers
         [HttpPost("upload")]
         [Authorize]
         [Consumes("multipart/form-data")]
+        [RequestSizeLimit(104_857_600)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104_857_600)]
         public async Task<IActionResult> Upload([FromForm] UploadDocumentDto dto)
         {
             try
@@ -167,18 +169,8 @@ namespace PresentationLayer.Controllers
             {
                 var document = await _service.GetForDownloadAsync(documentId);
 
-                var filePath = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    document.Fileurl.TrimStart('/')
-                );
-
-                if (!System.IO.File.Exists(filePath))
-                    return NotFound(new { message = "File không tồn tại trên server." });
-
-                var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-
-                return File(bytes, "application/octet-stream", document.Documentname);
+                // Chuyển hướng người dùng đến URL của Cloudinary để tải file
+                return Redirect(document.Fileurl);
             }
             catch (Exception ex)
             {

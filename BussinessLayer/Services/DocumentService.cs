@@ -9,11 +9,13 @@ namespace BussinessLayer.Services
     {
         private readonly IDocumentRepository _repo;
         private readonly IClubRepository _clubRepo;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public DocumentService(IDocumentRepository repo, IClubRepository clubRepo)
+        public DocumentService(IDocumentRepository repo, IClubRepository clubRepo, ICloudinaryService cloudinaryService)
         {
             _repo = repo;
             _clubRepo = clubRepo;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<List<Document>> UploadAsync(UploadDocumentDto dto, long currentUserId, string currentUserRole)
@@ -39,16 +41,6 @@ namespace BussinessLayer.Services
                 ".ppt", ".pptx", ".png", ".jpg", ".jpeg", ".txt"
             };
 
-            var uploadFolder = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                "uploads",
-                "documents"
-            );
-
-            if (!Directory.Exists(uploadFolder))
-                Directory.CreateDirectory(uploadFolder);
-
             var result = new List<Document>();
 
             foreach (var file in dto.Files)
@@ -56,21 +48,13 @@ namespace BussinessLayer.Services
                 if (file.Length <= 0)
                     continue;
 
-                if (file.Length > 10 * 1024 * 1024)
-                    throw new Exception($"File {file.FileName} vượt quá 10MB.");
-
                 var extension = Path.GetExtension(file.FileName).ToLower();
 
                 if (!allowedExtensions.Contains(extension))
                     throw new Exception($"File {file.FileName} không được hỗ trợ.");
 
-                var storedFileName = $"{Guid.NewGuid()}{extension}";
-                var fullPath = Path.Combine(uploadFolder, storedFileName);
-
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // Upload lên Cloudinary
+                var cloudinaryUrl = await _cloudinaryService.UploadFileAsync(file, "documents");
 
                 var document = new Document
                 {
@@ -78,7 +62,7 @@ namespace BussinessLayer.Services
                     Documenttypeid = dto.DocumentTypeId,
                     Eventid = dto.EventId,
                     Documentname = file.FileName,
-                    Fileurl = $"/uploads/documents/{storedFileName}",
+                    Fileurl = cloudinaryUrl,
                     Filesize = file.Length,
                     Downloadcount = 0,
                     Accesslevel = dto.AccessLevel,
@@ -165,14 +149,11 @@ namespace BussinessLayer.Services
             if (!isAdmin && !isLeader)
                 throw new UnauthorizedAccessException("Chỉ Leader của CLB hoặc Admin mới được phép xóa tài liệu.");
 
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                document.Fileurl.TrimStart('/')
-            );
-
-            if (File.Exists(filePath))
-                File.Delete(filePath);
+            // Xóa file trên Cloudinary
+            if (!string.IsNullOrEmpty(document.Fileurl))
+            {
+                await _cloudinaryService.DeleteFileAsync(document.Fileurl);
+            }
 
             await _repo.DeleteAsync(document);
         }

@@ -40,7 +40,7 @@ namespace BussinessLayer.Services
                         File = new FileDescription(file.FileName, stream),
                         Folder = folder
                     };
-                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    uploadResult = await _cloudinary.UploadLargeAsync(uploadParams);
                 }
                 else if (isImage)
                 {
@@ -49,7 +49,7 @@ namespace BussinessLayer.Services
                         File = new FileDescription(file.FileName, stream),
                         Folder = folder
                     };
-                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    uploadResult = await _cloudinary.UploadLargeAsync(uploadParams);
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace BussinessLayer.Services
                         File = new FileDescription(file.FileName, stream),
                         Folder = folder
                     };
-                    uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                    uploadResult = await _cloudinary.UploadLargeAsync(uploadParams);
                 }
             }
 
@@ -67,6 +67,50 @@ namespace BussinessLayer.Services
                 throw new Exception(uploadResult.Error.Message);
 
             return uploadResult.SecureUrl.ToString();
+        }
+
+        public async Task DeleteFileAsync(string fileUrl)
+        {
+            if (string.IsNullOrEmpty(fileUrl)) return;
+
+            try
+            {
+                var uri = new Uri(fileUrl);
+                var segments = uri.Segments;
+                // segments looks like: ["/", "yikqzell/", "raw/", "upload/", "v1784571155/", "documents/", "tpytz9ql2ywhwj5rx3xc.txt"]
+                
+                var uploadIndex = Array.IndexOf(segments, "upload/");
+                if (uploadIndex >= 0 && uploadIndex + 2 < segments.Length)
+                {
+                    // Lấy tất cả các segment sau version (v1784571155/)
+                    var publicIdSegments = segments.Skip(uploadIndex + 2).Select(s => s.TrimEnd('/'));
+                    var publicId = string.Join("/", publicIdSegments);
+                    
+                    var isRaw = segments.Contains("raw/");
+                    var isVideo = segments.Contains("video/");
+                    var resourceType = isRaw ? ResourceType.Raw : (isVideo ? ResourceType.Video : ResourceType.Image);
+                    
+                    if (resourceType != ResourceType.Raw) 
+                    {
+                        // Image and Video public_id thường không có extension
+                        var lastDotIndex = publicId.LastIndexOf('.');
+                        if (lastDotIndex > 0)
+                        {
+                            publicId = publicId.Substring(0, lastDotIndex);
+                        }
+                    }
+
+                    var deletionParams = new DeletionParams(publicId)
+                    {
+                        ResourceType = resourceType
+                    };
+                    await _cloudinary.DestroyAsync(deletionParams);
+                }
+            }
+            catch (Exception)
+            {
+                // Bỏ qua lỗi xóa nếu URL không hợp lệ hoặc file không tồn tại
+            }
         }
     }
 }
