@@ -48,10 +48,10 @@ public class NotificationService : INotificationService
             Notificationtype = dto.NotificationType,
             Targettype       = dto.TargetType,
             Targetrole       = dto.TargetRole,
-            Clubid           = dto.ClubId,
-            Eventid          = dto.EventId,
-            Clubreportid     = dto.ClubReportId,
-            Reportperiodid   = dto.ReportPeriodId,
+            Clubid           = dto.ClubId == 0 ? null : dto.ClubId,
+            Eventid          = dto.EventId == 0 ? null : dto.EventId,
+            Clubreportid     = dto.ClubReportId == 0 ? null : dto.ClubReportId,
+            Reportperiodid   = dto.ReportPeriodId == 0 ? null : dto.ReportPeriodId,
             Createdat        = DateTime.Now
         };
 

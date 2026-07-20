@@ -50,7 +50,7 @@ public class NotificationController : ControllerBase
             if (senderId == null)
                 return Unauthorized(new { message = "Không xác định được người gửi từ token." });
 
-            var role = User.FindFirstValue(ClaimTypes.Role) ?? "";
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirst("system_role")?.Value ?? "";
             
             // Nếu không phải ADMIN hoặc Manager, phải là Leader
             if (!role.Equals("ADMIN", StringComparison.OrdinalIgnoreCase) && 
