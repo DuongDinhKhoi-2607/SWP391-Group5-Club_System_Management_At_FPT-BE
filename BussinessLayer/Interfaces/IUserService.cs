@@ -11,4 +11,5 @@ public interface IUserService
     Task UnblockUserAsync(long userId);
     Task<UserDetailDto> UpdateProfileAsync(long userId, UpdateUserProfileDto dto);
     Task<MemberActivityHistoryDto> GetMemberActivityHistoryAsync(long userId);
+    Task ChangePasswordAsync(long userId, ChangePasswordDto dto);
 }

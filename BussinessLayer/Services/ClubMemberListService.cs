@@ -153,6 +153,7 @@ namespace BussinessLayer.Services
             var body = $@"
                 <h3>Chào bạn {student.Fullname},</h3>
                 <p>Bạn đã được mời tham gia câu lạc bộ với vai trò là thành viên.</p>
+                <p><b>Lưu ý quan trọng:</b> Mật khẩu đăng nhập mặc định của bạn là <b>Mã số sinh viên (MSSV)</b>. Vui lòng đăng nhập và đổi mật khẩu ngay sau khi kích hoạt.</p>
                 <p>Vui lòng nhấn vào liên kết bên dưới để kích hoạt tài khoản và xác nhận gia nhập câu lạc bộ:</p>
                 <p><a href='{activationLink}' style='background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; display: inline-block; border-radius: 4px; font-weight: bold;'>Xác nhận tham gia</a></p>
                 <p>Liên kết này có hiệu lực trong vòng 24 giờ.</p>

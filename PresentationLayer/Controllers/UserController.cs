@@ -142,6 +142,31 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
+    /// [MEMBER / ALL] Người dùng tự đổi mật khẩu.
+    /// </summary>
+    [HttpPut("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        try
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!long.TryParse(userIdStr, out long userId))
+                return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+            await _userService.ChangePasswordAsync(userId, dto);
+            return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// [MEMBER / ALL] Người dùng tự cập nhật hồ sơ cá nhân.
     /// Nhận dữ liệu dưới dạng multipart/form-data để hỗ trợ tải ảnh đại diện lên Cloudinary.
     /// </summary>

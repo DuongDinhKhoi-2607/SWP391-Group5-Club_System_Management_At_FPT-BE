@@ -52,6 +52,7 @@ public class UserService : IUserService
             Avatar = user.Userinformation?.Avatar,
             Phone = user.Userinformation?.Phonenumber,
             Gender = user.Userinformation?.Student?.Gender,
+            DateOfBirth = user.Userinformation?.Student?.Dateofbirth,
             Major = user.Userinformation?.Student?.Major,
             AcademicBatch = user.Userinformation?.Student?.Academicbatch,
             IsAlumni = user.Userinformation?.Isalumni,
@@ -162,6 +163,7 @@ public class UserService : IUserService
             Avatar = user.Userinformation.Avatar,
             Phone = user.Userinformation.Phonenumber,
             Gender = user.Userinformation.Student?.Gender,
+            DateOfBirth = user.Userinformation.Student?.Dateofbirth,
             Major = user.Userinformation.Student?.Major,
             AcademicBatch = user.Userinformation.Student?.Academicbatch,
             IsAlumni = user.Userinformation.Isalumni,
@@ -240,6 +242,19 @@ public class UserService : IUserService
         }
 
         return history;
+    }
+
+    public async Task ChangePasswordAsync(long userId, ChangePasswordDto dto)
+    {
+        var user = await _repo.GetUserByIdAsync(userId);
+        if (user == null)
+            throw new Exception("Không tìm thấy người dùng.");
+
+        if (user.Passwordhash != HashSha256(dto.OldPassword))
+            throw new Exception("Mật khẩu cũ không chính xác.");
+
+        user.Passwordhash = HashSha256(dto.NewPassword);
+        await _repo.UpdateUserAsync(user);
     }
 
     private static string HashSha256(string input)
