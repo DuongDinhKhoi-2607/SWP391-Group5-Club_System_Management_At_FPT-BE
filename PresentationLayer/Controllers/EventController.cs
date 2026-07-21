@@ -28,6 +28,7 @@ namespace PresentationLayer.Controllers
 
         private static EventResponseDto MapToResponse(Event e)
         {
+            var vnZone = TimeSpan.FromHours(7);
             return new EventResponseDto
             {
                 EventId = e.Eventid,
@@ -39,8 +40,8 @@ namespace PresentationLayer.Controllers
                 TargetParticipants = e.Targetparticipants,
                 ActualParticipants = e.Actualparticipants,
                 Status = e.Status,
-                StartTime = e.Starttime,
-                EndTime = e.Endtime,
+                StartTime = new DateTimeOffset(e.Starttime, vnZone),
+                EndTime = new DateTimeOffset(e.Endtime, vnZone),
 
                 Club = e.Club == null ? null : new EventClubDto
                 {

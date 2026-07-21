@@ -55,6 +55,7 @@ public class UserService : IUserService
             Major = user.Userinformation?.Student?.Major,
             AcademicBatch = user.Userinformation?.Student?.Academicbatch,
             IsAlumni = user.Userinformation?.Isalumni,
+            DateOfBirth = user.Userinformation?.Student?.Dateofbirth,
             GraduationDate = user.Userinformation?.Graduationdate,
             CreatedAt = user.Createdat,
             LastLoginAt = user.Lastloginat
@@ -165,6 +166,7 @@ public class UserService : IUserService
             Major = user.Userinformation.Student?.Major,
             AcademicBatch = user.Userinformation.Student?.Academicbatch,
             IsAlumni = user.Userinformation.Isalumni,
+            DateOfBirth = user.Userinformation.Student?.Dateofbirth,
             GraduationDate = user.Userinformation.Graduationdate,
             CreatedAt = user.Createdat,
         };

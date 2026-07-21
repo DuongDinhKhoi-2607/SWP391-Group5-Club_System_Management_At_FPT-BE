@@ -9,15 +9,17 @@ namespace BussinessLayer.Services
     public class ClubService : IClubService
     {
         private readonly IClubRepository _repo;
+        private readonly IEmailService _emailService;
 
         private static readonly HashSet<string> AllowedStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "Đang hoạt động", "Tạm dừng", "Giải thể"
         };
 
-        public ClubService(IClubRepository repo)
+        public ClubService(IClubRepository repo, IEmailService emailService)
         {
             _repo = repo;
+            _emailService = emailService;
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -41,6 +43,8 @@ namespace BussinessLayer.Services
 
 
 
+            var isNewUser = student.Userinformation == null;
+
             var club = new Club
             {
                 Clubname           = dto.ClubName,
@@ -54,7 +58,25 @@ namespace BussinessLayer.Services
                 Createdat          = DateTime.Now
             };
 
-            return await _repo.CreateClubWithLeaderAsync(club, student);
+            var createdClub = await _repo.CreateClubWithLeaderAsync(club, student);
+
+            if (isNewUser && !string.IsNullOrEmpty(student.Schoolemail))
+            {
+                var subject = $"Tài khoản mới - Chủ nhiệm CLB {createdClub.Clubname}";
+                var body = $@"
+                    <h3>Chào {student.Fullname},</h3>
+                    <p>Bạn đã được Admin thêm làm chủ nhiệm của Câu lạc bộ <strong>{createdClub.Clubname}</strong>.</p>
+                    <p>Một tài khoản mới đã được tạo cho bạn trong hệ thống FPT Clubs Management.</p>
+                    <ul>
+                        <li><strong>Tên đăng nhập:</strong> {student.Studentid}</li>
+                        <li><strong>Mật khẩu mặc định:</strong> {student.Studentid}</li>
+                    </ul>
+                    <p>Vui lòng đăng nhập và đổi mật khẩu sớm nhất có thể.</p>
+                    <p>Trân trọng,<br>Ban quản trị FPT Clubs Management</p>";
+                await _emailService.SendEmailAsync(student.Schoolemail, subject, body);
+            }
+
+            return createdClub;
         }
 
         // ─────────────────────────────────────────────────────────────

@@ -17,6 +17,7 @@ public class UserDetailDto
     public string? Major { get; set; }
     public string? AcademicBatch { get; set; }
     public bool? IsAlumni { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
     public DateOnly? GraduationDate { get; set; }
 
     public DateTime CreatedAt { get; set; }
