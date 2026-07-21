@@ -20,8 +20,12 @@ namespace BussinessLayer.Interfaces
         Task<Participant> UploadEvidenceAsync(long userId, long eventId, UploadEventEvidenceDto dto);
         Task<Evidence> ReviewEvidenceAsync(long evidenceId, string status);
 
-        /// <summary>[ADMIN,Manager] Lấy danh sách evidence theo sự kiện.</summary>
-        Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long eventId);
+        Task<Evidence> ReviewEvidenceByLeaderAsync(long currentUserId, long evidenceId, string status);
+        Task<List<EvidenceResponseDto>> GetPendingEvidencesForLeaderAsync(long clubId);
+        Task<List<ParticipantResponseDto>> GetParticipantsByEventAsync(long currentUserId, long eventId, bool isAdminOrManager);
+
+        /// <summary>[Leader, ADMIN, Manager] Lấy danh sách evidence theo sự kiện.</summary>
+        Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long currentUserId, long eventId, bool isAdminOrManager);
 
         /// <summary>[ADMIN,Manager] Lấy tất cả evidence đang chờ duyệt.</summary>
         Task<List<EvidenceResponseDto>> GetPendingEvidencesAsync();

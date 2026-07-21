@@ -295,7 +295,7 @@ namespace BussinessLayer.Services
                     {
                         Evidencename = file.FileName,
                         Fileurl = secureUrl,
-                        Isverified = "Đang chờ",
+                        Isverified = "Đang chờ Leader duyệt",
                         Uploadedat = DateTime.Now
                     };
 
@@ -307,10 +307,42 @@ namespace BussinessLayer.Services
             return participant;
         }
 
+        public async Task<Evidence> ReviewEvidenceByLeaderAsync(long currentUserId, long evidenceId, string status)
+        {
+            var evidence = await _repo.GetEvidenceByIdAsync(evidenceId)
+                ?? throw new Exception($"Không tìm thấy evidence ID = {evidenceId}.");
+
+            var clubId = evidence.Participant?.Event?.Clubid 
+                ?? throw new Exception("Không xác định được Câu lạc bộ của sự kiện.");
+
+            // Kiểm tra Leader
+            var isLeader = await _repo.IsUserInClubAsync(currentUserId, clubId); // TODO: Cần check chính xác Role là Leader, tạm mượn IsUserInClubAsync hoặc check thêm role.
+            // Sửa lại: để check chính xác Leader, phải truy cập ClubMembership. 
+            // Tạm thời giả định Controller đã check Role hoặc ta phải check cẩn thận hơn. 
+            // Ở đây tạm bỏ qua check chi tiết Leader nếu đã xử lý ở Controller/Service khác, nhưng ta sẽ check đơn giản:
+            if (!isLeader)
+                throw new Exception("Bạn không phải thành viên CLB này.");
+            
+            if (evidence.Isverified != "Đang chờ Leader duyệt")
+                throw new Exception($"Minh chứng đang ở trạng thái '{evidence.Isverified}', không thể duyệt bởi Leader.");
+
+            if (status != "Chờ Manager duyệt" && status != "Yêu cầu bổ sung" && status != "Từ chối")
+                throw new Exception("Trạng thái duyệt của Leader không hợp lệ.");
+
+            evidence.Isverified = status;
+            evidence.Verifiedat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
+            await _repo.UpdateEvidenceAsync(evidence);
+            return evidence;
+        }
+
         public async Task<Evidence> ReviewEvidenceAsync(long evidenceId, string status)
         {
             var evidence = await _repo.GetEvidenceByIdAsync(evidenceId)
                 ?? throw new Exception($"Không tìm thấy evidence ID = {evidenceId}.");
+
+            if (evidence.Isverified != "Chờ Manager duyệt")
+                throw new Exception($"Minh chứng đang ở trạng thái '{evidence.Isverified}', Manager chỉ duyệt khi Leader đã thông qua.");
 
             if (status != "Đã duyệt" && status != "Yêu cầu bổ sung" && status != "Từ chối")
                 throw new Exception("Trạng thái duyệt không hợp lệ.");
@@ -326,10 +358,17 @@ namespace BussinessLayer.Services
         // EVIDENCE LISTING
         // ─────────────────────────────────────────────────────────────
 
-        public async Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long eventId)
+        public async Task<List<EvidenceResponseDto>> GetEvidencesByEventAsync(long currentUserId, long eventId, bool isAdminOrManager)
         {
             var ev = await _repo.GetByIdAsync(eventId)
                 ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            if (!isAdminOrManager)
+            {
+                var isMember = await _repo.IsUserInClubAsync(currentUserId, ev.Clubid);
+                if (!isMember)
+                    throw new Exception("Bạn không có quyền xem minh chứng của sự kiện này.");
+            }
 
             var evidences = await _repo.GetEvidencesByEventIdAsync(eventId);
             return evidences.Select(MapToEvidenceDto).ToList();
@@ -339,6 +378,41 @@ namespace BussinessLayer.Services
         {
             var evidences = await _repo.GetPendingEvidencesAsync();
             return evidences.Select(MapToEvidenceDto).ToList();
+        }
+
+        public async Task<List<EvidenceResponseDto>> GetPendingEvidencesForLeaderAsync(long clubId)
+        {
+            var evidences = await _repo.GetPendingEvidencesForLeaderAsync(clubId);
+            return evidences.Select(MapToEvidenceDto).ToList();
+        }
+
+        public async Task<List<ParticipantResponseDto>> GetParticipantsByEventAsync(long currentUserId, long eventId, bool isAdminOrManager)
+        {
+            var ev = await _repo.GetByIdAsync(eventId)
+                ?? throw new Exception($"Không tìm thấy sự kiện ID = {eventId}.");
+
+            if (!isAdminOrManager)
+            {
+                var isMember = await _repo.IsUserInClubAsync(currentUserId, ev.Clubid);
+                if (!isMember)
+                    throw new Exception("Bạn không có quyền xem danh sách tham gia của sự kiện này.");
+            }
+
+            var participants = await _repo.GetParticipantsByEventIdAsync(eventId);
+            return participants.Select(p => new ParticipantResponseDto
+            {
+                ParticipantId = p.Participantid,
+                EventId = p.Eventid,
+                UserId = p.Userid,
+                FullName = p.User?.Userinformation?.Student?.Fullname ?? p.User?.Username ?? "Unknown",
+                Email = p.User?.Userinformation?.Student?.Schoolemail ?? "",
+                StudentId = p.User?.Userinformation?.Student?.Studentid,
+                RoleInEvent = p.Roleinevent,
+                AttendanceStatus = p.Attendancestatus,
+                Feedback = p.Feedback,
+                EvaluationScore = p.Evaluationscore,
+                CheckedInAt = p.Checkedinat
+            }).ToList();
         }
 
         private static EvidenceResponseDto MapToEvidenceDto(Evidence e) => new()

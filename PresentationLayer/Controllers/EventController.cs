@@ -377,16 +377,21 @@ namespace PresentationLayer.Controllers
         // ─────────────────────────────────────────────────────────────
 
         /// <summary>
-        /// [ADMIN,Manager] Lấy danh sách evidence theo sự kiện.
-        /// Cho phép Manager/Admin browse evidence trước khi review.
+        /// [Leader, ADMIN, Manager] Lấy danh sách evidence theo sự kiện.
         /// </summary>
         [HttpGet("{eventId:long}/evidences")]
-        [Authorize(Roles = "ADMIN,Manager")]
+        [Authorize]
         public async Task<IActionResult> GetEvidencesByEvent(long eventId)
         {
             try
             {
-                var evidences = await _service.GetEvidencesByEventAsync(eventId);
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                bool isAdminOrManager = User.IsInRole("ADMIN") || User.IsInRole("Manager");
+
+                var evidences = await _service.GetEvidencesByEventAsync(currentUserId, eventId, isAdminOrManager);
                 return Ok(new
                 {
                     message = "Lấy danh sách evidence thành công.",
@@ -427,6 +432,102 @@ namespace PresentationLayer.Controllers
             }
         }
 
+        // ─────────────────────────────────────────────────────────────
+        // PATCH /api/events/evidence/{evidenceId}/leader-review
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [Leader] Kiểm tra evidence của thành viên tham gia sự kiện.
+        /// </summary>
+        [HttpPatch("evidence/{evidenceId:long}/leader-review")]
+        [Authorize]
+        public async Task<IActionResult> ReviewEvidenceByLeader(long evidenceId, [FromBody] ReviewEvidenceDto dto)
+        {
+            try
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                var result = await _service.ReviewEvidenceByLeaderAsync(currentUserId, evidenceId, dto.Status);
+
+                return Ok(new
+                {
+                    message = $"Đã cập nhật trạng thái minh chứng thành '{result.Isverified}'.",
+                    data = new
+                    {
+                        evidenceId = result.Evidenceid,
+                        isVerified = result.Isverified,
+                        verifiedAt = result.Verifiedat
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/events/evidences/pending-leader
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [Leader] Lấy tất cả evidence đang chờ Leader duyệt của một CLB.
+        /// </summary>
+        [HttpGet("evidences/pending-leader")]
+        [Authorize]
+        public async Task<IActionResult> GetPendingEvidencesForLeader([FromQuery] long clubId)
+        {
+            try
+            {
+                // Ở đây ta nhận clubId từ query params để xác định đang xem cho CLB nào.
+                var evidences = await _service.GetPendingEvidencesForLeaderAsync(clubId);
+                return Ok(new
+                {
+                    message = "Lấy danh sách evidence chờ Leader duyệt thành công.",
+                    total = evidences.Count,
+                    data = evidences
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/events/{eventId}/participants
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// [Leader, ADMIN, Manager] Xem danh sách thành viên tham gia sự kiện.
+        /// </summary>
+        [HttpGet("{eventId:long}/participants")]
+        [Authorize]
+        public async Task<IActionResult> GetParticipantsByEvent(long eventId)
+        {
+            try
+            {
+                var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!long.TryParse(userIdStr, out long currentUserId))
+                    return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+                bool isAdminOrManager = User.IsInRole("ADMIN") || User.IsInRole("Manager");
+
+                var participants = await _service.GetParticipantsByEventAsync(currentUserId, eventId, isAdminOrManager);
+                return Ok(new
+                {
+                    message = "Lấy danh sách tham gia thành công.",
+                    total = participants.Count,
+                    data = participants
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
     }
 }

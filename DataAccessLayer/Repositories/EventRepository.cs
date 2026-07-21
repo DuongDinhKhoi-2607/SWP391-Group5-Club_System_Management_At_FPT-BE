@@ -174,8 +174,26 @@ namespace DataAccessLayer.Repositories
             return await _context.Evidences
                 .Include(e => e.Participant).ThenInclude(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
                 .Include(e => e.Participant).ThenInclude(p => p.Event).ThenInclude(ev => ev.Club)
-                .Where(e => e.Isverified == "Đang chờ")
+                .Where(e => e.Isverified == "Chờ Manager duyệt")
                 .OrderByDescending(e => e.Uploadedat)
+                .ToListAsync();
+        }
+
+        public async Task<List<Evidence>> GetPendingEvidencesForLeaderAsync(long clubId)
+        {
+            return await _context.Evidences
+                .Include(e => e.Participant).ThenInclude(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
+                .Include(e => e.Participant).ThenInclude(p => p.Event).ThenInclude(ev => ev.Club)
+                .Where(e => e.Participant.Event.Clubid == clubId && e.Isverified == "Đang chờ Leader duyệt")
+                .OrderByDescending(e => e.Uploadedat)
+                .ToListAsync();
+        }
+
+        public async Task<List<Participant>> GetParticipantsByEventIdAsync(long eventId)
+        {
+            return await _context.Participants
+                .Include(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
+                .Where(p => p.Eventid == eventId)
                 .ToListAsync();
         }
 

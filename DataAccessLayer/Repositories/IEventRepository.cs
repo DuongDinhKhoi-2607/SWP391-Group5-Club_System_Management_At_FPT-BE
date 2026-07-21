@@ -26,8 +26,13 @@ namespace DataAccessLayer.Repositories
         /// <summary>Lấy danh sách evidence theo sự kiện (bao gồm thông tin participant, event, club).</summary>
         Task<List<Evidence>> GetEvidencesByEventIdAsync(long eventId);
 
-        /// <summary>Lấy tất cả evidence đang chờ duyệt (status = "Đang chờ").</summary>
+        /// <summary>Lấy tất cả evidence đang chờ duyệt (status = "Chờ Manager duyệt").</summary>
         Task<List<Evidence>> GetPendingEvidencesAsync();
+
+        /// <summary>Lấy tất cả evidence đang chờ Leader duyệt của một Club (status = "Đang chờ Leader duyệt").</summary>
+        Task<List<Evidence>> GetPendingEvidencesForLeaderAsync(long clubId);
+
+        Task<List<Participant>> GetParticipantsByEventIdAsync(long eventId);
 
     }
 }
