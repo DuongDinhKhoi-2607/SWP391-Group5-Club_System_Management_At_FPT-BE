@@ -109,10 +109,7 @@ namespace DataAccessLayer.Repositories
 
         public async Task UpdateAsync(Event ev)
         {
-            if (_context.Entry(ev).State == EntityState.Detached)
-            {
-                _context.Events.Update(ev);
-            }
+            _context.Events.Update(ev);
             await _context.SaveChangesAsync();
         }
 
@@ -131,10 +128,7 @@ namespace DataAccessLayer.Repositories
 
         public async Task UpdateParticipantAsync(Participant participant)
         {
-            if (_context.Entry(participant).State == EntityState.Detached)
-            {
-                _context.Participants.Update(participant);
-            }
+            _context.Participants.Update(participant);
             await _context.SaveChangesAsync();
         }
 
@@ -161,10 +155,7 @@ namespace DataAccessLayer.Repositories
 
         public async Task UpdateEvidenceAsync(Evidence evidence)
         {
-            if (_context.Entry(evidence).State == EntityState.Detached)
-            {
-                _context.Evidences.Update(evidence);
-            }
+            _context.Evidences.Update(evidence);
             await _context.SaveChangesAsync();
         }
 

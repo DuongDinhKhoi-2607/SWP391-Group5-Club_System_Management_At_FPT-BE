@@ -120,28 +120,6 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
-    /// [MEMBER / ALL] Lấy thông tin hồ sơ của chính user đang đăng nhập.
-    /// </summary>
-    [HttpGet("profile")]
-    [Authorize]
-    public async Task<IActionResult> GetMyProfile()
-    {
-        try
-        {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!long.TryParse(userIdStr, out long userId))
-                return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
-
-            var user = await _userService.GetUserByIdAsync(userId);
-            return Ok(new { message = "Lấy thông tin cá nhân thành công.", data = user });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
-    /// <summary>
     /// [MEMBER / ALL] Người dùng tự đổi mật khẩu.
     /// </summary>
     [HttpPut("change-password")]
@@ -159,6 +137,28 @@ public class UserController : ControllerBase
 
             await _userService.ChangePasswordAsync(userId, dto);
             return Ok(new { message = "Đổi mật khẩu thành công." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// [MEMBER / ALL] Lấy thông tin hồ sơ của chính user đang đăng nhập.
+    /// </summary>
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetMyProfile()
+    {
+        try
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!long.TryParse(userIdStr, out long userId))
+                return Unauthorized(new { message = "Token không hợp lệ hoặc thiếu userId." });
+
+            var user = await _userService.GetUserByIdAsync(userId);
+            return Ok(new { message = "Lấy thông tin cá nhân thành công.", data = user });
         }
         catch (Exception ex)
         {

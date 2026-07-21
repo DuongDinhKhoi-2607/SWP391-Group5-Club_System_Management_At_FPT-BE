@@ -294,8 +294,7 @@ namespace PresentationLayer.Controllers
             }
             catch (Exception ex)
             {
-                var msg = ex.InnerException != null ? $"{ex.Message} Inner: {ex.InnerException.Message}" : ex.Message;
-                return BadRequest(new { message = msg });
+                return BadRequest(new { message = ex.Message });
             }
         }
 

@@ -245,12 +245,18 @@ namespace BussinessLayer.Services
             if (existingParticipant != null)
                 throw new Exception("Bạn đã đăng ký tham gia sự kiện này rồi.");
 
+            var roleInEvent = dto.RoleInEvent;
+            if (roleInEvent == "Participant")
+            {
+                roleInEvent = "Thành viên tham gia";
+            }
+
             var participant = new Participant
             {
                 Eventid = eventId,
                 Userid = userId,
-                Roleinevent = dto.RoleInEvent,
-                Attendancestatus = "Vắng mặt"
+                Roleinevent = roleInEvent,
+                Attendancestatus = "Đã đăng ký"
             };
 
             ev.Actualparticipants = currentParticipants + 1;
