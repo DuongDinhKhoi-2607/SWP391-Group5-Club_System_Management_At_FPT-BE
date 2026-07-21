@@ -18,16 +18,17 @@ namespace BussinessLayer.Services
 
         public async Task<Event> CreateEventAsync(CreateEventDto dto, long currentUserId)
         {
-            dto.StartTime = DateTime.SpecifyKind(dto.StartTime, DateTimeKind.Unspecified);
-            dto.EndTime = DateTime.SpecifyKind(dto.EndTime, DateTimeKind.Unspecified);
+            var vnZone = TimeSpan.FromHours(7);
+            var startTime = dto.StartTime.ToOffset(vnZone).DateTime;
+            var endTime = dto.EndTime.ToOffset(vnZone).DateTime;
 
-            if (dto.StartTime >= dto.EndTime)
+            if (startTime >= endTime)
                 throw new Exception("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.");
 
             var duplicate = await _repo.ExistsDuplicateEventAsync(
                 dto.ClubId,
                 dto.EventName,
-                dto.StartTime
+                startTime
             );
 
             if (duplicate)
@@ -35,8 +36,8 @@ namespace BussinessLayer.Services
 
             var conflict = await _repo.IsEventTimeConflictAsync(
                 dto.ClubId,
-                dto.StartTime,
-                dto.EndTime
+                startTime,
+                endTime
             );
 
             if (conflict)
@@ -52,8 +53,8 @@ namespace BussinessLayer.Services
                 Targetparticipants = dto.TargetParticipants,
                 Actualparticipants = 0,
                 Status = "Chờ duyệt",
-                Starttime = dto.StartTime,
-                Endtime = dto.EndTime
+                Starttime = startTime,
+                Endtime = endTime
             };
 
             return await _repo.CreateAsync(newEvent);
@@ -97,16 +98,17 @@ namespace BussinessLayer.Services
             if (ev.Status == "Đã hủy")
                 throw new Exception("Sự kiện đã hủy, không thể sửa.");
 
-            dto.StartTime = DateTime.SpecifyKind(dto.StartTime, DateTimeKind.Unspecified);
-            dto.EndTime = DateTime.SpecifyKind(dto.EndTime, DateTimeKind.Unspecified);
+            var vnZone = TimeSpan.FromHours(7);
+            var startTime = dto.StartTime.ToOffset(vnZone).DateTime;
+            var endTime = dto.EndTime.ToOffset(vnZone).DateTime;
 
-            if (dto.StartTime >= dto.EndTime)
+            if (startTime >= endTime)
                 throw new Exception("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.");
 
             var duplicate = await _repo.ExistsDuplicateEventAsync(
                 ev.Clubid,
                 dto.EventName,
-                dto.StartTime,
+                startTime,
                 eventId
             );
 
@@ -115,8 +117,8 @@ namespace BussinessLayer.Services
 
             var conflict = await _repo.IsEventTimeConflictAsync(
                 ev.Clubid,
-                dto.StartTime,
-                dto.EndTime,
+                startTime,
+                endTime,
                 eventId
             );
 
@@ -128,8 +130,8 @@ namespace BussinessLayer.Services
             ev.Location = dto.Location;
             ev.Planbudget = dto.PlanBudget;
             ev.Targetparticipants = dto.TargetParticipants;
-            ev.Starttime = dto.StartTime;
-            ev.Endtime = dto.EndTime;
+            ev.Starttime = startTime;
+            ev.Endtime = endTime;
 
             if (ev.Status == "Đã duyệt" || ev.Status == "Bị từ chối" || ev.Status == "Yêu cầu chỉnh sửa")
                 ev.Status = "Chờ duyệt";

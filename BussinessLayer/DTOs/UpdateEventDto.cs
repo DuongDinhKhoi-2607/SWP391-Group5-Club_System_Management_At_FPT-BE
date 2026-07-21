@@ -1,4 +1,4 @@
-﻿namespace BussinessLayer.DTOs
+namespace BussinessLayer.DTOs
 {
     public class UpdateEventDto
     {
@@ -7,7 +7,7 @@
         public string? Location { get; set; }
         public string? PlanBudget { get; set; }
         public int TargetParticipants { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public DateTimeOffset EndTime { get; set; }
     }
 }

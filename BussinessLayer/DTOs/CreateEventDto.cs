@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 
@@ -12,8 +12,8 @@ namespace BussinessLayer.DTOs
         public string? Location { get; set; }
         public string? PlanBudget { get; set; }
         public int TargetParticipants { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public DateTimeOffset EndTime { get; set; }
 
         public List<IFormFile>? Files { get; set; }
     }
