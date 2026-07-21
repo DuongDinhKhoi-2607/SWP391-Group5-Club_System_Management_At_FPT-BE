@@ -256,7 +256,7 @@ namespace BussinessLayer.Services
                 Eventid = eventId,
                 Userid = userId,
                 Roleinevent = roleInEvent,
-                Attendancestatus = "Đã đăng ký"
+                Attendancestatus = "Vắng mặt"
             };
 
             ev.Actualparticipants = currentParticipants + 1;
