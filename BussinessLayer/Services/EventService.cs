@@ -296,7 +296,8 @@ namespace BussinessLayer.Services
                         Evidencename = file.FileName,
                         Fileurl = secureUrl,
                         Isverified = "Đang chờ Leader duyệt",
-                        Uploadedat = DateTime.Now
+                        Uploadedat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+                        Participantid = participant.Participantid
                     };
 
                     participant.Evidences.Add(evidence);
