@@ -29,7 +29,7 @@ namespace DataAccessLayer.Repositories
         /// <summary>Lấy tất cả evidence đang chờ duyệt (status = "Chờ Manager duyệt").</summary>
         Task<List<Evidence>> GetPendingEvidencesAsync();
 
-        /// <summary>Lấy tất cả evidence đang chờ Leader duyệt của một Club (status = "Đang chờ Leader duyệt").</summary>
+        /// <summary>Lấy tất cả evidence đang chờ Leader duyệt của một Club (status = "Chờ duyệt").</summary>
         Task<List<Evidence>> GetPendingEvidencesForLeaderAsync(long clubId);
 
         Task<List<Participant>> GetParticipantsByEventIdAsync(long eventId);
