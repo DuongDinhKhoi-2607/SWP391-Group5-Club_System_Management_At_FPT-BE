@@ -184,7 +184,7 @@ namespace DataAccessLayer.Repositories
             return await _context.Evidences
                 .Include(e => e.Participant).ThenInclude(p => p.User).ThenInclude(u => u.Userinformation).ThenInclude(ui => ui!.Student)
                 .Include(e => e.Participant).ThenInclude(p => p.Event).ThenInclude(ev => ev.Club)
-                .Where(e => e.Participant.Event.Clubid == clubId && e.Isverified == "Chờ duyệt")
+                .Where(e => e.Participant.Event.Clubid == clubId && e.Isverified == "Đang chờ")
                 .OrderByDescending(e => e.Uploadedat)
                 .ToListAsync();
         }

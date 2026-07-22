@@ -295,7 +295,7 @@ namespace BussinessLayer.Services
                     {
                         Evidencename = file.FileName,
                         Fileurl = secureUrl,
-                        Isverified = "Chờ duyệt",
+                        Isverified = "Đang chờ",
                         Uploadedat = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
                         Participantid = participant.Participantid
                     };
@@ -324,7 +324,7 @@ namespace BussinessLayer.Services
             if (!isLeader)
                 throw new Exception("Bạn không phải thành viên CLB này.");
             
-            if (evidence.Isverified != "Chờ duyệt")
+            if (evidence.Isverified != "Đang chờ")
                 throw new Exception($"Minh chứng đang ở trạng thái '{evidence.Isverified}', không thể duyệt bởi Leader.");
 
             if (status != "Chờ Manager duyệt" && status != "Yêu cầu bổ sung" && status != "Từ chối")
