@@ -17,38 +17,37 @@ public class EmailService : IEmailService
 
     public async Task SendEmailAsync(string toEmail, string subject, string body, bool isHtml = true)
     {
-        var smtpServer = _config["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
-        var smtpPortStr = _config["EmailSettings:SmtpPort"] ?? "587";
+        var sendGridApiKey = _config["EmailSettings:SendGridApiKey"];
         var senderEmail = _config["EmailSettings:SenderEmail"] ?? "se182046duongdinhkhoi@gmail.com";
-        var senderPassword = _config["EmailSettings:SenderPassword"] ?? "vqgjxcpzqbsmtvbf";
-        var enableSslStr = _config["EmailSettings:EnableSsl"] ?? "true";
 
-        if (!int.TryParse(smtpPortStr, out int smtpPort))
+        if (string.IsNullOrEmpty(sendGridApiKey))
         {
-            smtpPort = 587;
+            throw new Exception("SendGrid API Key is missing. Please add it to appsettings.json.");
         }
 
-        if (!bool.TryParse(enableSslStr, out bool enableSsl))
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", sendGridApiKey);
+
+        var payload = new
         {
-            enableSsl = true;
+            personalizations = new[]
+            {
+                new { to = new[] { new { email = toEmail } } }
+            },
+            from = new { email = senderEmail, name = "FPT Club System" },
+            subject = subject,
+            content = new[]
+            {
+                new { type = isHtml ? "text/html" : "text/plain", value = body }
+            }
+        };
+
+        var response = await client.PostAsJsonAsync("https://api.sendgrid.com/v3/mail/send", payload);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorDetail = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Failed to send email via SendGrid: {response.StatusCode} - {errorDetail}");
         }
-
-        using var client = new SmtpClient(smtpServer, smtpPort)
-        {
-            Credentials = new NetworkCredential(senderEmail, senderPassword),
-            EnableSsl = enableSsl
-        };
-
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(senderEmail, "FPT Club System"),
-            Subject = subject,
-            Body = body,
-            IsBodyHtml = isHtml
-        };
-
-        mailMessage.To.Add(toEmail);
-
-        await client.SendMailAsync(mailMessage);
     }
 }
