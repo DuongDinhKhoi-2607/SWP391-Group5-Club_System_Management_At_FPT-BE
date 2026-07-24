@@ -158,7 +158,18 @@ namespace BussinessLayer.Services
                 <p>Liên kết này có hiệu lực trong vòng 24 giờ.</p>
                 <p>Nếu bạn không yêu cầu tham gia câu lạc bộ, vui lòng bỏ qua email này.</p>";
 
-            await _emailService.SendEmailAsync(student.Schoolemail, subject, body);
+            // Gửi email xác nhận (chạy ngầm để không làm treo API)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(student.Schoolemail, subject, body);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Lỗi gửi email]: {ex.Message}");
+                }
+            });
 
             return new ClubMemberListDto
             {
